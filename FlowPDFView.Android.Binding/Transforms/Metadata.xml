@@ -1,0 +1,59 @@
+<metadata>
+  <!-- FlowPdfium Binding Configuration -->
+  
+  <!-- PDFView main class -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer']/class[@name='PDFView']" name="managedType">Com.Blaze.Pdfviewer.PDFView</attr>
+
+  <!-- PDFium Core classes -->
+  <attr path="/api/package[@name='com.blaze.pdfium']/class[@name='PdfiumCore']" name="managedType">Com.Blaze.Pdfium.PdfiumCore</attr>
+  <attr path="/api/package[@name='com.blaze.pdfium']/class[@name='PdfDocument']" name="managedType">Com.Blaze.Pdfium.PdfDocument</attr>
+  <attr path="/api/package[@name='com.blaze.pdfium']/class[@name='PdfTextPage']" name="managedType">Com.Blaze.Pdfium.PdfTextPage</attr>
+  <attr path="/api/package[@name='com.blaze.pdfium']/class[@name='FindResult']" name="managedType">Com.Blaze.Pdfium.FindResult</attr>
+  <attr path="/api/package[@name='com.blaze.pdfium']/class[@name='PdfPasswordException']" name="managedType">Com.Blaze.Pdfium.PdfPasswordException</attr>
+
+  <!-- PDFView Search Manager -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer']/class[@name='PdfSearchManager']" name="managedType">Com.Blaze.Pdfviewer.PdfSearchManager</attr>
+
+  <!-- Listener interfaces -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnLoadCompleteListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnLoadCompleteListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnPageChangeListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnPageChangeListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnErrorListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnErrorListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnRenderListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnRenderListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnDrawListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnDrawListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnTapListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnTapListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnLongPressListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnLongPressListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnPageScrollListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnPageScrollListener</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.listener']/class[@name='OnPageErrorListener']" name="managedType">Com.Blaze.Pdfviewer.Listener.OnPageErrorListener</attr>
+
+  <!-- Source classes -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.source']/class[@name='DocumentSource']" name="managedType">Com.Blaze.Pdfviewer.Source.DocumentSource</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.source']/class[@name='FileSource']" name="managedType">Com.Blaze.Pdfviewer.Source.FileSource</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.source']/class[@name='UriSource']" name="managedType">Com.Blaze.Pdfviewer.Source.UriSource</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.source']/class[@name='AssetSource']" name="managedType">Com.Blaze.Pdfviewer.Source.AssetSource</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.source']/class[@name='ByteArraySource']" name="managedType">Com.Blaze.Pdfviewer.Source.ByteArraySource</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.source']/class[@name='InputStreamSource']" name="managedType">Com.Blaze.Pdfviewer.Source.InputStreamSource</attr>
+
+  <!-- Model classes -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.model']/class[@name='PagePart']" name="managedType">Com.Blaze.Pdfviewer.Model.PagePart</attr>
+
+  <!-- Enums -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.util']/class[@name='FitPolicy']" name="managedType">Com.Blaze.Pdfviewer.Util.FitPolicy</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.util']/class[@name='ScrollDir']" name="managedType">Com.Blaze.Pdfviewer.Util.ScrollDir</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.util']/class[@name='SnapEdge']" name="managedType">Com.Blaze.Pdfviewer.Util.SnapEdge</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.util']/class[@name='State']" name="managedType">Com.Blaze.Pdfviewer.Util.State</attr>
+
+  <!-- Utility classes -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.util']/class[@name='PdfUtils']" name="managedType">Com.Blaze.Pdfviewer.Util.PdfUtils</attr>
+  <attr path="/api/package[@name='com.blaze.pdfium.util']/class[@name='Size']" name="managedType">Com.Blaze.Pdfium.Util.Size</attr>
+  <attr path="/api/package[@name='com.blaze.pdfium.util']/class[@name='SizeF']" name="managedType">Com.Blaze.Pdfium.Util.SizeF</attr>
+
+  <!-- Link handling -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.link']/class[@name='LinkHandler']" name="managedType">Com.Blaze.Pdfviewer.Link.LinkHandler</attr>
+  <attr path="/api/package[@name='com.blaze.pdfviewer.link']/class[@name='DefaultLinkHandler']" name="managedType">Com.Blaze.Pdfviewer.Link.DefaultLinkHandler</attr>
+
+  <!-- Scroll handle -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer.scroll']/class[@name='ScrollHandle']" name="managedType">Com.Blaze.Pdfviewer.Scroll.ScrollHandle</attr>
+
+  <!-- Configurator for fluent API -->
+  <attr path="/api/package[@name='com.blaze.pdfviewer']/class[@name='Configurator']" name="managedType">Com.Blaze.Pdfviewer.Configurator</attr>
+</metadata>

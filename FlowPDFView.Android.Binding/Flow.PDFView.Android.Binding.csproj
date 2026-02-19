@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>net10.0-android</TargetFrameworks>
+        <SupportedOSPlatformVersion>35</SupportedOSPlatformVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsTrimmable>
+        <PackageId>Flow.PDFView.Android.Binding</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Flow</Authors>
+        <Company>Flow</Company>
+        <Product>Flow PDFView Android Binding</Product>
+        <Description>.NET Android binding for BlazePdfium - A maintained fork of BlazePdfium with enhanced PDF rendering capabilities.</Description>
+        <PackageProjectUrl>https://github.com/flow/FlowPDFView</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/flow/FlowPDFView</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>android;pdf;pdfviewer;binding;flow-pdfium;native</PackageTags>
+        <Copyright>Copyright (c) 2026 Flow</Copyright>
+    </PropertyGroup>
+
+    <!-- Dependencies -->
+    <ItemGroup>
+        <PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.1.21" />
+    </ItemGroup>
+
+    <!--
+    Native .so files from BlazePdfium project:
+    - Build from source: cd BlazePdfium && ./gradlew :libPdfium:build
+    - Prebuilt libs location: BlazePdfium/libPdfium/src/main/cpp/libs/
+    - After building, copy .so files to: $(IntermediateOutputPath)native\arm64-v8a\
+    -->
+    <ItemGroup>
+        <!-- Copy native .so files to output during build -->
+        <None Include="..\BlazePdfium\libPdfium\src\main\cpp\libs\arm64-v8a\libpdfium_jni.so">
+            <Link>jni\arm64-v8a\libpdfium_jni.so</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\BlazePdfium\libPdfium\src\main\cpp\libs\armeabi-v7a\libpdfium_jni.so">
+            <Link>jni\armeabi-v7a\libpdfium_jni.so</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\BlazePdfium\libPdfium\src\main\cpp\libs\x86\libpdfium_jni.so">
+            <Link>jni\x86\libpdfium_jni.so</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\BlazePdfium\libPdfium\src\main\cpp\libs\x86_64\libpdfium_jni.so">
+            <Link>jni\x86_64\libpdfium_jni.so</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
+        <AndroidLibrary Include="Jars\blaze-pdfviewer-*.aar" />
+    </ItemGroup>
+</Project>

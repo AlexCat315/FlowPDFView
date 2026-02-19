@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pdf="clr-namespace:Flow.PDFView;assembly=Flow.PDFView"
+             x:Class="ExampleMauiApp.MainPage">
+    <ContentPage.Resources>
+        <Color x:Key="PanelBgColorLight">#F2FFFFFF</Color>
+        <Color x:Key="PanelBgColorDark">#F21E293B</Color>
+        <Color x:Key="PanelStrokeColorLight">#D0D7DE</Color>
+        <Color x:Key="PanelStrokeColorDark">#475569</Color>
+        <Color x:Key="PanelTextColorLight">#0F172A</Color>
+        <Color x:Key="PanelTextColorDark">#E2E8F0</Color>
+        <Color x:Key="PanelHintTextColorLight">#334155</Color>
+        <Color x:Key="PanelHintTextColorDark">#CBD5E1</Color>
+        <Color x:Key="InputBgLight">#FFFFFF</Color>
+        <Color x:Key="InputBgDark">#334155</Color>
+        <Color x:Key="InputBorderLight">#CBD5E1</Color>
+        <Color x:Key="InputBorderDark">#64748B</Color>
+
+        <Style TargetType="Entry">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PanelTextColorLight}, Dark={StaticResource PanelTextColorDark}}" />
+            <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource PanelHintTextColorLight}, Dark={StaticResource PanelHintTextColorDark}}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource InputBgLight}, Dark={StaticResource InputBgDark}}" />
+        </Style>
+        <Style TargetType="Picker">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PanelTextColorLight}, Dark={StaticResource PanelTextColorDark}}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource InputBgLight}, Dark={StaticResource InputBgDark}}" />
+            <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource PanelHintTextColorLight}, Dark={StaticResource PanelHintTextColorDark}}" />
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PanelTextColorLight}, Dark={StaticResource PanelTextColorDark}}" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PanelTextColorLight}, Dark={StaticResource PanelTextColorDark}}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E2E8F0, Dark=#334155}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid Padding="16">
+        <Border StrokeThickness="1"
+                Stroke="#CBD5E1"
+                BackgroundColor="#E2E8F0"
+                StrokeShape="RoundRectangle 10"
+                Padding="8">
+            <pdf:PdfView x:Name="PdfViewer"
+                         EnableZoom="True"
+                         EnableSwipe="True"
+                         EnableLinkNavigation="True"
+                         DisplayMode="SinglePageContinuous"
+                         ScrollOrientation="Vertical"
+                         FitPolicy="Width"
+                         DocumentLoaded="OnDocumentLoaded"
+                         PageChanged="OnPageChanged"
+                         Error="OnPdfError" />
+        </Border>
+
+        <Button x:Name="ToolbarToggleButton"
+                Text="打开工具栏"
+                VerticalOptions="End"
+                HorizontalOptions="End"
+                Margin="12"
+                Padding="16,10"
+                Clicked="OnToolbarToggleClicked" />
+
+        <Border x:Name="ToolbarPanel"
+                IsVisible="False"
+                VerticalOptions="End"
+                Margin="8"
+                BackgroundColor="{AppThemeBinding Light={StaticResource PanelBgColorLight}, Dark={StaticResource PanelBgColorDark}}"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource PanelStrokeColorLight}, Dark={StaticResource PanelStrokeColorDark}}"
+                Padding="10"
+                MaximumHeightRequest="420"
+                StrokeShape="RoundRectangle 10">
+            <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="FlowPDFView 工具栏"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource PanelTextColorLight}, Dark={StaticResource PanelTextColorDark}}"
+                           VerticalTextAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Text="关闭"
+                            Clicked="OnToolbarCloseClicked" />
+                </Grid>
+
+                <ScrollView Grid.Row="1"
+                            Orientation="Vertical">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Entry x:Name="UrlEntry"
+                                   Grid.Column="0"
+                                   Placeholder="输入 PDF URL，例如 https://.../demo.pdf"
+                                   ClearButtonVisibility="WhileEditing"
+                                   ReturnType="Go" />
+                            <Button Grid.Column="1"
+                                    Text="加载 URL"
+                                    Clicked="OnLoadUrlClicked" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <Entry x:Name="SearchEntry"
+                                   Grid.Column="0"
+                                   Placeholder="输入关键词，测试搜索高亮"
+                                   ReturnType="Search" />
+                            <Button Grid.Column="1"
+                                    Text="搜索"
+                                    Clicked="OnSearchClicked" />
+                            <Button Grid.Column="2"
+                                    Text="清除"
+                                    Clicked="OnSearchClearClicked" />
+                        </Grid>
+
+                        <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                            <Button x:Name="SearchPrevButton"
+                                    Text="上一个"
+                                    Margin="0,0,8,0"
+                                    IsEnabled="False"
+                                    Clicked="OnSearchPrevClicked" />
+                            <Button x:Name="SearchNextButton"
+                                    Text="下一个"
+                                    Margin="0,0,8,0"
+                                    IsEnabled="False"
+                                    Clicked="OnSearchNextClicked" />
+                            <Label Text="高亮"
+                                   VerticalTextAlignment="Center" />
+                            <Switch x:Name="SearchHighlightSwitch"
+                                    Margin="4,0,12,0"
+                                    IsToggled="True"
+                                    Toggled="OnSearchHighlightToggled" />
+                            <Label x:Name="SearchStatusLabel"
+                                   Text="搜索: 未执行"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource PanelHintTextColorLight}, Dark={StaticResource PanelHintTextColorDark}}"
+                                   VerticalTextAlignment="Center" />
+                        </FlexLayout>
+
+                        <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                            <Button Text="加载示例"
+                                    Margin="0,0,8,0"
+                                    Clicked="OnLoadSampleClicked" />
+                            <Button Text="本地文件"
+                                    Margin="0,0,8,0"
+                                    Clicked="OnPickFileClicked" />
+                            <Button Text="重载"
+                                    Margin="0,0,8,0"
+                                    Clicked="OnReloadClicked" />
+                            <Button x:Name="PrevPageButton"
+                                    Margin="0,0,8,0"
+                                    Text="上一页"
+                                    Clicked="OnPrevPageClicked"
+                                    IsEnabled="False" />
+                            <Button x:Name="NextPageButton"
+                                    Margin="0,0,8,0"
+                                    Text="下一页"
+                                    Clicked="OnNextPageClicked"
+                                    IsEnabled="False" />
+                            <Label x:Name="SourceInfoLabel"
+                                   WidthRequest="220"
+                                   VerticalTextAlignment="Center"
+                                   Text="来源: 未加载"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource PanelHintTextColorLight}, Dark={StaticResource PanelHintTextColorDark}}"
+                                   LineBreakMode="TailTruncation" />
+                        </FlexLayout>
+
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" >
+                            <Picker x:Name="DisplayModePicker"
+                                    Title="显示模式"
+                                    SelectedIndexChanged="OnDisplayModeChanged" />
+                            <Picker x:Name="OrientationPicker"
+                                    Grid.Column="1"
+                                    Title="滚动方向"
+                                    SelectedIndexChanged="OnOrientationChanged" />
+                            <Picker x:Name="FitPolicyPicker"
+                                    Grid.Column="2"
+                                    Title="适配策略"
+                                    SelectedIndexChanged="OnFitPolicyChanged" />
+                        </Grid>
+
+                        <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                            <Label Text="缩放" VerticalTextAlignment="Center" />
+                            <Switch x:Name="EnableZoomSwitch"
+                                    Margin="4,0,12,0"
+                                    IsToggled="True"
+                                    Toggled="OnEnableZoomToggled" />
+                            <Label Text="滑动" VerticalTextAlignment="Center" />
+                            <Switch x:Name="EnableSwipeSwitch"
+                                    Margin="4,0,12,0"
+                                    IsToggled="True"
+                                    Toggled="OnEnableSwipeToggled" />
+                            <Label Text="链接" VerticalTextAlignment="Center" />
+                            <Switch x:Name="EnableLinkSwitch"
+                                    Margin="4,0,0,0"
+                                    IsToggled="True"
+                                    Toggled="OnEnableLinkToggled" />
+                        </FlexLayout>
+
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Slider x:Name="ZoomSlider"
+                                    Grid.Column="0"
+                                    Minimum="1"
+                                    Maximum="4"
+                                    Value="1"
+                                    ValueChanged="OnZoomSliderValueChanged" />
+                            <Label x:Name="ZoomValueLabel"
+                                   Grid.Column="1"
+                                   WidthRequest="60"
+                                   HorizontalTextAlignment="End"
+                                   VerticalTextAlignment="Center"
+                                   Text="1.0x" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Label Grid.Column="0"
+                                   x:Name="PageInfoLabel"
+                                   Text="页码: - / -"
+                                   FontAttributes="Bold"
+                                   VerticalTextAlignment="Center" />
+                            <Label Grid.Column="1"
+                                   x:Name="EventInfoLabel"
+                                   Margin="10,0,0,0"
+                                   Text="状态: 等待加载 PDF"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource PanelHintTextColorLight}, Dark={StaticResource PanelHintTextColorDark}}"
+                                   VerticalTextAlignment="Center"
+                                   LineBreakMode="TailTruncation" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
+        </Border>
+    </Grid>
+
+</ContentPage>
