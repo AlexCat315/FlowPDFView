@@ -79,7 +79,7 @@ public partial class MainPage : ContentPage
 		{
 			SetStatus("URL 无效");
 			if (showAlertOnError)
-				await DisplayAlert("URL 无效", "请输入完整的绝对 URL。", "确定");
+				await DisplayAlertAsync("URL 无效", "请输入完整的绝对 URL。", "确定");
 			return;
 		}
 
