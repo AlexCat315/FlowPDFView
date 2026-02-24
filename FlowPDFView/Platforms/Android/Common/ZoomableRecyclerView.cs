@@ -7,6 +7,10 @@ using ScaleGestureDetector = Android.Views.ScaleGestureDetector;
 
 namespace Flow.PDFView.Platforms.Android.Common
 {
+    /// <summary>
+    /// en: A RecyclerView with zoom capabilities for displaying PDF pages.
+    /// zh: 支持缩放功能的 RecyclerView，用于显示 PDF 页面。
+    /// </summary>
     internal partial class ZoomableRecyclerView : RecyclerView
     {
         private const float MinZoom = 1f;
@@ -69,8 +73,11 @@ namespace Flow.PDFView.Platforms.Android.Common
             return (int)(dx / _scaleFactor);
         }
 
-        public override bool OnTouchEvent(MotionEvent e)
+        public override bool OnTouchEvent(MotionEvent? e)
         {
+            if (e == null)
+                return base.OnTouchEvent(e);
+
             if (!IsZoomEnabled)
                 return base.OnTouchEvent(e);
 

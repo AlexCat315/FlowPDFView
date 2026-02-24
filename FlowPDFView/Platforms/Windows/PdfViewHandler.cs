@@ -17,6 +17,10 @@ using PigPdfDocument = UglyToad.PdfPig.PdfDocument;
 
 namespace Flow.PDFView.Platforms.Windows;
 
+/// <summary>
+/// en: Windows handler for mapping PdfView properties to native controls.
+/// zh: 用于将 PdfView 属性映射到原生控件的 Windows 处理器。
+/// </summary>
 public class PdfViewHandler : ViewHandler<PdfView, ScrollViewer>
 {
     public static readonly PropertyMapper<PdfView, PdfViewHandler> Mapper = new(ViewMapper)

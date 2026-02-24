@@ -56,9 +56,16 @@
 	    <Pack>True</Pack>
 	    <PackagePath>\</PackagePath>
 	  </None>
+	  <None Include="..\LICENSE">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Flow.PDFView.Core\Flow.PDFView.Core.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Flow.PDFView.Controls\Flow.PDFView.Controls.csproj" />
+	</ItemGroup>
 </Project>

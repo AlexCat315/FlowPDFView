@@ -3,9 +3,13 @@ using AndroidX.RecyclerView.Widget;
 
 namespace Flow.PDFView.Platforms.Android.Common
 {
+    /// <summary>
+    /// en: Custom LayoutManager that respects zoom state when scrolling.
+    /// zh: 自定义 LayoutManager，在滚动时尊重缩放状态。
+    /// </summary>
     internal class ZoomableLinearLayoutManager : LinearLayoutManager
     {
-        private ZoomableRecyclerView _recyclerView;
+        private ZoomableRecyclerView? _recyclerView;
 
         public ZoomableLinearLayoutManager(Context context, int orientation, bool reverseLayout) : base(context, orientation, reverseLayout)
         {

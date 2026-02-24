@@ -5,6 +5,10 @@ using Com.Blaze.Pdfviewer;
 
 namespace Flow.PDFView.Platforms.Android;
 
+/// <summary>
+/// en: Android handler for mapping PdfView properties to native controls.
+/// zh: 用于将 PdfView 属性映射到原生控件的 Android 处理器。
+/// </summary>
 public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.PDFView>
 {
     private PdfViewAndroid? _pdfViewWrapper;

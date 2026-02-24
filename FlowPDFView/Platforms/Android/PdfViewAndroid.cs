@@ -10,6 +10,10 @@ using Rect = Microsoft.Maui.Graphics.Rect;
 
 namespace Flow.PDFView.Platforms.Android;
 
+/// <summary>
+/// en: Android platform implementation of the PDF view control.
+/// zh: PDF 视图控件的 Android 平台实现。
+/// </summary>
 public class PdfViewAndroid : IDisposable
 {
     private static readonly global::Android.Graphics.Color DefaultPageBackgroundColor =
@@ -303,7 +307,9 @@ public class PdfViewAndroid : IDisposable
     public event EventHandler<PdfTappedEventArgs>? Tapped;
     public event EventHandler<RenderedEventArgs>? Rendered;
 
+#pragma warning disable CS0067
     public event EventHandler<AnnotationTappedEventArgs>? AnnotationTapped;
+#pragma warning restore CS0067
 
     public event EventHandler<PdfSearchResultsEventArgs>? SearchResultsFound;
     public event EventHandler<PdfSearchProgressEventArgs>? SearchProgress;

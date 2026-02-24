@@ -8,6 +8,10 @@ using UIKit;
 
 namespace Flow.PDFView.Platforms.MacCatalyst;
 
+/// <summary>
+/// en: MacCatalyst handler for mapping PdfView properties to native controls.
+/// zh: 用于将 PdfView 属性映射到原生控件的 MacCatalyst 处理器。
+/// </summary>
 public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
 {
     public static readonly PropertyMapper<PdfView, PdfViewHandler> Mapper = new(ViewMapper)

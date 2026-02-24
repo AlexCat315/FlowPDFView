@@ -267,8 +267,10 @@ namespace Flow.PDFView
     {
         /// <summary>
         /// 当前旋转角度（0、90、180、270）
+        /// 使用 `new` 关键字隐藏可能来自上层接口的同名成员以避免警告。
+        /// Current rotation angle (0, 90, 180, 270). Hides a similarly named member from a base interface.
         /// </summary>
-        int Rotation { get; set; }
+        new int Rotation { get; set; }
 
         /// <summary>
         /// 异步旋转指定页面

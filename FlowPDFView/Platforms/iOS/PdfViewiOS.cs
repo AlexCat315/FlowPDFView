@@ -5,6 +5,10 @@ using Foundation;
 
 namespace Flow.PDFView.Platforms.iOS;
 
+/// <summary>
+/// en: iOS/macOS platform implementation of the PDF view control.
+/// zh: PDF 视图控件的 iOS/macOS 平台实现。
+/// </summary>
 public class PdfViewiOS : IDisposable
 {
     private readonly PdfKit.PdfView _pdfView;
@@ -143,8 +147,18 @@ public class PdfViewiOS : IDisposable
 
     public bool EnableLinkNavigation
     {
-        get => _pdfView.EnableDataDetectors;
-        set => _pdfView.EnableDataDetectors = value;
+        get
+        {
+#pragma warning disable CA1422
+            return _pdfView.EnableDataDetectors;
+#pragma warning restore CA1422
+        }
+        set
+        {
+#pragma warning disable CA1422
+            _pdfView.EnableDataDetectors = value;
+#pragma warning restore CA1422
+        }
     }
 
     public float Zoom
@@ -522,12 +536,15 @@ public class PdfViewiOS : IDisposable
                     break;
 
                 case StreamPdfSource streamSource:
-                    document = new PdfDocument(NSData.FromStream(streamSource.Stream));
+                    var streamData = NSData.FromStream(streamSource.Stream);
+                    if (streamData != null)
+                        document = new PdfDocument(streamData);
                     break;
 
                 case BytesPdfSource bytesSource:
                     var bytesData = NSData.FromArray(bytesSource.Data);
-                    document = new PdfDocument(bytesData);
+                    if (bytesData != null)
+                        document = new PdfDocument(bytesData);
                     break;
 
                 case AssetPdfSource assetSource:

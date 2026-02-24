@@ -12,6 +12,10 @@ using ParcelFileDescriptor = Android.OS.ParcelFileDescriptor;
 
 namespace Flow.PDFView.Platforms.Android.Common
 {
+    /// <summary>
+    /// en: RecyclerView adapter for rendering PDF pages as bitmaps.
+    /// zh: 用于将 PDF 页面渲染为位图的 RecyclerView 适配器。
+    /// </summary>
     internal class PdfBitmapAdapter : RecyclerView.Adapter
     {
         private readonly PageAppearance? _pageAppearance;
@@ -59,9 +63,12 @@ namespace Flow.PDFView.Platforms.Android.Common
                     if (!string.IsNullOrEmpty(_fileName) && System.IO.File.Exists(_fileName))
                     {
                         _fileDescriptor = ParcelFileDescriptor.Open(new Java.IO.File(_fileName), ParcelFileMode.ReadOnly);
-                        _pdfRenderer = new PdfRenderer(_fileDescriptor);
-                        _isRendererInitialized = true;
-                        return true;
+                        if (_fileDescriptor != null)
+                        {
+                            _pdfRenderer = new PdfRenderer(_fileDescriptor);
+                            _isRendererInitialized = true;
+                            return true;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -76,7 +83,12 @@ namespace Flow.PDFView.Platforms.Android.Common
 
         public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
         {
-            global::Android.Views.View itemView = LayoutInflater.From(parent.Context).Inflate(Resource.Layout.card_view, parent, false);
+            global::Android.Views.View? itemView = LayoutInflater.From(parent.Context)?.Inflate(Resource.Layout.card_view, parent, false);
+
+            if (itemView == null)
+            {
+                throw new InvalidOperationException("Failed to inflate card_view layout");
+            }
 
             if (itemView is CardView cardView && _pageAppearance != null)
             {
@@ -100,6 +112,9 @@ namespace Flow.PDFView.Platforms.Android.Common
         {
             CardViewHolder vh = (CardViewHolder)holder;
             
+            if (vh.Image == null)
+                return;
+
             Bitmap? bitmap = null;
             lock (_cacheLock)
             {
@@ -147,7 +162,10 @@ namespace Flow.PDFView.Platforms.Android.Common
                         if (page == null)
                             return null;
 
-                        pageBitmap = Bitmap.CreateBitmap(width, height, Bitmap.Config.Argb8888);
+                        var config = Bitmap.Config.Argb8888;
+                        pageBitmap = config != null ? Bitmap.CreateBitmap(width, height, config) : null;
+                        if (pageBitmap == null)
+                            return null;
                         
                         var crop = _pageAppearance?.Crop ?? Microsoft.Maui.Thickness.Zero;
                         var matrix = GetCropMatrix(page, pageBitmap, crop);

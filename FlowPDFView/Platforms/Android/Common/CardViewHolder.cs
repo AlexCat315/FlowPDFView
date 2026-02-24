@@ -3,9 +3,13 @@ using AndroidX.RecyclerView.Widget;
 
 namespace Flow.PDFView.Platforms.Android.Common
 {
+    /// <summary>
+    /// en: ViewHolder for PDF page card items.
+    /// zh: PDF 页面卡片项的 ViewHolder。
+    /// </summary>
     internal class CardViewHolder : RecyclerView.ViewHolder
     {
-        public ImageView Image { get; private set; }
+        public ImageView? Image { get; private set; }
 
         public CardViewHolder(global::Android.Views.View itemView) : base(itemView)
         {

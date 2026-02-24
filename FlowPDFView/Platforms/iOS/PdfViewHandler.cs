@@ -7,6 +7,10 @@ using Foundation;
 
 namespace Flow.PDFView.Platforms.iOS;
 
+/// <summary>
+/// en: iOS/macOS handler for mapping PdfView properties to native controls.
+/// zh: 用于将 PdfView 属性映射到原生控件的 iOS/macOS 处理器。
+/// </summary>
 public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
 {
     private PdfViewiOS? _pdfViewWrapper;

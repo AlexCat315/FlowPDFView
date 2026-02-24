@@ -6,7 +6,7 @@ namespace Flow.PDFView;
 /// en: Default configuration constants for `PdfView` control.
 /// zh: `PdfView` 控件的默认配置常量。
 /// </summary>
-internal static class PdfViewDefaults
+public static class PdfViewDefaults
 {
     public const bool EnableZoom = true;
     public const bool EnableSwipe = true;

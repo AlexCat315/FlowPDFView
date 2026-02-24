@@ -6,6 +6,10 @@ using Android.Views;
 
 namespace Flow.PDFView.Platforms.Android
 {
+    /// <summary>
+    /// en: Helper class for screen metrics and density calculations on Android.
+    /// zh: Android 屏幕指标和密度计算的辅助类。
+    /// </summary>
     internal class ScreenHelper
     {
         private int _widthPixels;
@@ -15,24 +19,45 @@ namespace Flow.PDFView.Platforms.Android
 
         public void Invalidate()
         {
-            IWindowManager windowManager = global::Android.App.Application.Context.GetSystemService(global::Android.Content.Context.WindowService).JavaCast<IWindowManager>();
+            var windowService = global::Android.App.Application.Context.GetSystemService(global::Android.Content.Context.WindowService);
+            if (windowService == null)
+                return;
 
-            // 使用 .NET 提供的跨平台版本检查 API
+            IWindowManager windowManager = windowService.JavaCast<IWindowManager>();
+            if (windowManager == null)
+                return;
+
             if (OperatingSystem.IsAndroidVersionAtLeast(30))
             {
-                var bounds = windowManager.CurrentWindowMetrics.Bounds;
+                var windowMetrics = windowManager.CurrentWindowMetrics;
+                if (windowMetrics == null)
+                    return;
+                    
+                var bounds = windowMetrics.Bounds;
                 _widthPixels = bounds.Width();
                 _heightPixels = bounds.Height();
-                var displayMetrics = global::Android.App.Application.Context.Resources.DisplayMetrics;
-                _density = displayMetrics.Density;
-                _scaledDensity = displayMetrics.ScaledDensity;
+                
+                var resources = global::Android.App.Application.Context.Resources;
+                if (resources == null)
+                {
+                    _density = 1.0f;
+                    _scaledDensity = 1.0f;
+                    return;
+                }
+                    
+                var displayMetrics = resources.DisplayMetrics;
+                _density = displayMetrics?.Density ?? 1.0f;
+#pragma warning disable CA1422
+                _scaledDensity = displayMetrics?.ScaledDensity ?? 1.0f;
+#pragma warning restore CA1422
                 return;
             }
 
-            // 低版本路径
             var metrics = new DisplayMetrics();
-#pragma warning disable CA1422 // 抑制特定过时警告
-            windowManager.DefaultDisplay.GetMetrics(metrics);
+#pragma warning disable CA1422
+            var display = windowManager.DefaultDisplay;
+            if (display != null)
+                display.GetMetrics(metrics);
 #pragma warning restore CA1422
             _widthPixels = metrics.WidthPixels;
             _heightPixels = metrics.HeightPixels;
