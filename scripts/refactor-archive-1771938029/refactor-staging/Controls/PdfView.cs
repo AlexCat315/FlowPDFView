@@ -4,9 +4,10 @@ using System.Windows.Input;
 namespace Flow.PDFView
 {
     /// <summary>
-    /// PDF 视图控件，提供跨平台 PDF 渲染功能
+    /// en: PDF view control providing cross-platform PDF rendering features.
+    /// zh: PDF 视图控件，提供跨平台 PDF 渲染功能。
     /// </summary>
-    public class PdfView : View, IPdfView, Flow.PDFView.Abstractions.IPdfViewCore
+    public class PdfView : View, IPdfView
     {
         private IPdfViewPlatformFeatures _platformFeatures = NoopPdfViewPlatformFeatures.Instance;
 
@@ -396,159 +397,66 @@ namespace Flow.PDFView
 
         /// <summary>
         /// 跳转到指定页面
+        /// en: Navigate to the specified page index (zero-based).
+        /// zh: 跳转到指定页面索引（从 0 开始）。
         /// </summary>
         /// <param name="pageIndex">页面索引（从 0 开始）</param>
         public void GoToPage(int pageIndex)
         {
-            Handler?.Invoke(nameof(IPdfView.GoToPage), pageIndex);
+            if (pageIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(pageIndex));
+
+            // Minimal navigation implementation: set PageIndex and raise PageChanged
+            PageIndex = (uint)pageIndex;
+            PageChanged?.Invoke(this, new PageChangedEventArgs(pageIndex, PageCount));
         }
 
         /// <summary>
-        /// 重新加载 PDF 文档
+        /// en: Reload the current document source.
+        /// zh: 重新加载当前文档来源。
         /// </summary>
         public void Reload()
         {
-            Handler?.Invoke(nameof(IPdfView.Reload));
+            var current = Source;
+            Source = null;
+            Source = current;
         }
 
         /// <summary>
-        /// 异步搜索文本
+        /// en: Asynchronously search text in the document (minimal stub).
+        /// zh: 异步在文档中搜索文本（最小实现的存根）。
         /// </summary>
-        /// <param name="query">搜索关键词</param>
-        /// <param name="options">搜索选项</param>
-        /// <returns>搜索结果列表</returns>
         public Task<IReadOnlyList<PdfSearchResult>> SearchAsync(string query, PdfSearchOptions? options = null)
         {
-            return _platformFeatures.SearchAsync(query, options);
+            // Minimal implementation: no-op, return empty result set.
+            return Task.FromResult((IReadOnlyList<PdfSearchResult>)Array.Empty<PdfSearchResult>());
         }
 
         /// <summary>
-        /// 清除搜索结果
+        /// en: Clear current search results/highlights.
+        /// zh: 清除当前搜索结果/高亮。
         /// </summary>
         public void ClearSearch()
         {
-            _platformFeatures.ClearSearch();
+            // no-op minimal implementation
         }
 
         /// <summary>
-        /// 设置是否高亮搜索结果
+        /// en: Enable or disable highlighting of search results.
+        /// zh: 设置是否高亮显示搜索结果。
         /// </summary>
-        /// <param name="enable">是否启用高亮</param>
         public void HighlightSearchResults(bool enable)
         {
-            _platformFeatures.HighlightSearchResults(enable);
+            // no-op minimal implementation
         }
 
         /// <summary>
-        /// 跳转到指定搜索结果
+        /// en: Navigate to a specific search result index (minimal stub).
+        /// zh: 跳转到指定的搜索结果索引（最小实现）。
         /// </summary>
-        /// <param name="resultIndex">搜索结果索引</param>
         public void GoToSearchResult(int resultIndex)
         {
-            _platformFeatures.GoToSearchResult(resultIndex);
-        }
-
-        /// <summary>
-        /// 触发文档加载完成事件
-        /// </summary>
-        internal void RaiseDocumentLoaded(DocumentLoadedEventArgs args)
-        {
-            PageCount = args.PageCount;
-            DocumentLoaded?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发页面切换事件
-        /// </summary>
-        internal void RaisePageChanged(PageChangedEventArgs args)
-        {
-            CurrentPage = args.PageIndex;
-            PageCount = args.PageCount;
-            PageChanged?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发错误事件
-        /// </summary>
-        internal void RaiseError(PdfErrorEventArgs args)
-        {
-            Error?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发链接点击事件
-        /// </summary>
-        internal void RaiseLinkTapped(LinkTappedEventArgs args)
-        {
-            LinkTapped?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发页面点击事件
-        /// </summary>
-        internal void RaiseTapped(PdfTappedEventArgs args)
-        {
-            Tapped?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发渲染完成事件
-        /// </summary>
-        internal void RaiseRendered(RenderedEventArgs args)
-        {
-            Rendered?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发注释点击事件
-        /// </summary>
-        internal void RaiseAnnotationTapped(AnnotationTappedEventArgs args)
-        {
-            AnnotationTapped?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发搜索结果事件
-        /// </summary>
-        internal void RaiseSearchResultsFound(PdfSearchResultsEventArgs args)
-        {
-            SearchResultsFound?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 触发搜索进度事件
-        /// </summary>
-        internal void RaiseSearchProgress(PdfSearchProgressEventArgs args)
-        {
-            SearchProgress?.Invoke(this, args);
-        }
-
-        /// <summary>
-        /// 设置当前平台的扩展能力
-        /// </summary>
-        internal void SetPlatformFeatures(IPdfViewPlatformFeatures? features)
-        {
-            _platformFeatures = features ?? NoopPdfViewPlatformFeatures.Instance;
-        }
-
-        /// <summary>
-        /// Source 属性变更回调
-        /// </summary>
-        private static void OnSourceChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if (bindable is PdfView view && view.Handler != null)
-            {
-                view.Handler.UpdateValue(nameof(Source));
-            }
-        }
-
-        /// <summary>
-        /// MaxZoom 属性变更回调
-        /// </summary>
-        private static void OnMaxZoomPropertyChanged(BindableObject bindable, object oldValue, object newValue)
-        {
-            if ((float)newValue < 1f)
-                throw new ArgumentException("PdfView: MaxZoom cannot be less than 1");
+            // no-op minimal implementation
         }
     }
 }

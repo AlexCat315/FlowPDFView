@@ -173,7 +173,7 @@ namespace Flow.PDFView
 
         /// <summary>
         /// 跳转到指定搜索结果
-        /// </param>
+        /// </summary>
         /// <param name="resultIndex">结果索引</param>
         void GoToSearchResult(int resultIndex);
 
@@ -228,8 +228,8 @@ namespace Flow.PDFView
         /// <returns>大纲列表</returns>
         Task<IReadOnlyList<PdfOutline>> GetOutlineAsync();
 
-        ///  跳转到大纲<summary>
-        ///指定位置
+        /// <summary>
+        /// 跳转到指定大纲位置
         /// </summary>
         /// <param name="outline">大纲项</param>
         void GoToOutline(PdfOutline outline);

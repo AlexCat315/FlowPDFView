@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flow.PDFView", "FlowPDFView
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleMauiApp", "ExampleMauiApp\ExampleMauiApp.csproj", "{0AEF798E-FD71-43CD-902B-5752C74D58D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flow.PDFView.Core", "Flow.PDFView.Core\Flow.PDFView.Core.csproj", "{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{0AEF798E-FD71-43CD-902B-5752C74D58D3}.Release|x64.Build.0 = Release|Any CPU
 		{0AEF798E-FD71-43CD-902B-5752C74D58D3}.Release|x86.ActiveCfg = Release|Any CPU
 		{0AEF798E-FD71-43CD-902B-5752C74D58D3}.Release|x86.Build.0 = Release|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Debug|x64.Build.0 = Debug|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Debug|x86.Build.0 = Debug|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Release|x64.ActiveCfg = Release|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Release|x64.Build.0 = Release|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Release|x86.ActiveCfg = Release|Any CPU
+		{7F979CC0-B8F1-4DD1-AB86-5A676E06FB8C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

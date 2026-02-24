@@ -2,6 +2,10 @@ using Flow.PDFView.Abstractions;
 
 namespace Flow.PDFView;
 
+/// <summary>
+/// en: Default configuration constants for `PdfView` control.
+/// zh: `PdfView` 控件的默认配置常量。
+/// </summary>
 internal static class PdfViewDefaults
 {
     public const bool EnableZoom = true;
