@@ -12,10 +12,13 @@ public class PdfSourceTypeConverter : TypeConverter
 
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
+        if (value is null)
+            return null;
+
         return value switch
         {
-            string str => (PdfSource)str,
-            Uri uri => (PdfSource)uri,
+            string str => (PdfSource?)str,
+            Uri uri => (PdfSource?)uri,
             _ => base.ConvertFrom(context, culture, value)
         };
     }
