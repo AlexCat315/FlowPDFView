@@ -15,11 +15,11 @@
 		<!-- Windows uses default -->
 		<!--<GeneratePackageOnBuild>True</GeneratePackageOnBuild>-->
 		<PackageId>Flow.PDFView</PackageId>
-		<Authors>Flow</Authors>
+		<Authors>AlexCat315</Authors>
 		<Company>Flow</Company>
 		<Description>MAUI library for displaying PDF files</Description>
-		<PackageProjectUrl>https://github.com/flow/FlowPDFView</PackageProjectUrl>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/AlexCat315/FlowPDFView.git</PackageProjectUrl>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<Version>1.0.0</Version>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
