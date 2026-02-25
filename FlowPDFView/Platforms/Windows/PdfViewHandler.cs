@@ -847,6 +847,12 @@ public class PdfViewHandler : ViewHandler<PdfView, ScrollViewer>
         }
 
         VirtualView?.RaisePageChanged(new Abstractions.PageChangedEventArgs(currentPage, _stack.Children.Count));
+        VirtualView?.RaiseViewportChanged(new Abstractions.ViewportChangedEventArgs(
+            _scrollViewer.HorizontalOffset,
+            _scrollViewer.VerticalOffset,
+            _scrollViewer.ZoomFactor,
+            _scrollViewer.ViewportWidth,
+            _scrollViewer.ViewportHeight));
 
         if (VirtualView?.PageChangedCommand?.CanExecute(null) == true)
         {

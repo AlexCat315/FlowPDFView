@@ -35,6 +35,21 @@ namespace Flow.PDFView
         void GoToPage(int pageIndex);
 
         /// <summary>
+        /// 在当前视口基础上平移（单位：像素）。
+        /// </summary>
+        /// <param name="deltaX">X 方向平移增量</param>
+        /// <param name="deltaY">Y 方向平移增量</param>
+        void PanBy(double deltaX, double deltaY);
+
+        /// <summary>
+        /// 以指定中心点执行相对缩放。
+        /// </summary>
+        /// <param name="scaleFactor">缩放倍数（例如 1.05 表示放大 5%）</param>
+        /// <param name="centerX">缩放中心点 X（像素）</param>
+        /// <param name="centerY">缩放中心点 Y（像素）</param>
+        void ZoomBy(double scaleFactor, double centerX, double centerY);
+
+        /// <summary>
         /// 重新加载文档
         /// </summary>
         void Reload();
@@ -48,6 +63,11 @@ namespace Flow.PDFView
         /// 页面切换事件
         /// </summary>
         event EventHandler<PageChangedEventArgs>? PageChanged;
+
+        /// <summary>
+        /// 视口变化事件（滚动/缩放）
+        /// </summary>
+        event EventHandler<ViewportChangedEventArgs>? ViewportChanged;
 
         /// <summary>
         /// 错误事件

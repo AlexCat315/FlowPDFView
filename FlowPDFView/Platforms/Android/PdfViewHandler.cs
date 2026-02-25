@@ -37,6 +37,8 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
     public static CommandMapper<PdfView, PdfViewHandler> CommandMapper = new(ViewCommandMapper)
     {
         [nameof(IPdfView.GoToPage)] = MapGoToPage,
+        [nameof(IPdfView.PanBy)] = MapPanBy,
+        [nameof(IPdfView.ZoomBy)] = MapZoomBy,
         [nameof(IPdfView.Reload)] = MapReload,
     };
 
@@ -56,6 +58,7 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
 
         _pdfViewWrapper.DocumentLoaded += OnDocumentLoaded;
         _pdfViewWrapper.PageChanged += OnPageChanged;
+        _pdfViewWrapper.ViewportChanged += OnViewportChanged;
         _pdfViewWrapper.Error += OnError;
         _pdfViewWrapper.LinkTapped += OnLinkTapped;
         _pdfViewWrapper.Tapped += OnTapped;
@@ -105,6 +108,7 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
         {
             _pdfViewWrapper.DocumentLoaded -= OnDocumentLoaded;
             _pdfViewWrapper.PageChanged -= OnPageChanged;
+            _pdfViewWrapper.ViewportChanged -= OnViewportChanged;
             _pdfViewWrapper.Error -= OnError;
             _pdfViewWrapper.LinkTapped -= OnLinkTapped;
             _pdfViewWrapper.Tapped -= OnTapped;
@@ -126,6 +130,11 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
     private void OnPageChanged(object? sender, PageChangedEventArgs e)
     {
         VirtualView?.RaisePageChanged(e);
+    }
+
+    private void OnViewportChanged(object? sender, ViewportChangedEventArgs e)
+    {
+        VirtualView?.RaiseViewportChanged(e);
     }
 
     private void OnError(object? sender, PdfErrorEventArgs e)
@@ -299,6 +308,28 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
         if (handler._pdfViewWrapper != null && args is int pageIndex)
         {
             handler._pdfViewWrapper.GoToPage(pageIndex);
+        }
+    }
+
+    private static void MapPanBy(PdfViewHandler handler, PdfView view, object? args)
+    {
+        if (handler._pdfViewWrapper == null)
+            return;
+
+        if (args is ValueTuple<double, double> delta)
+        {
+            handler._pdfViewWrapper.PanBy(delta.Item1, delta.Item2);
+        }
+    }
+
+    private static void MapZoomBy(PdfViewHandler handler, PdfView view, object? args)
+    {
+        if (handler._pdfViewWrapper == null)
+            return;
+
+        if (args is ValueTuple<double, double, double> zoom)
+        {
+            handler._pdfViewWrapper.ZoomBy(zoom.Item1, zoom.Item2, zoom.Item3);
         }
     }
 

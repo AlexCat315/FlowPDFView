@@ -18,6 +18,7 @@ public class PdfViewAndroid : IDisposable
 {
     private static readonly global::Android.Graphics.Color DefaultPageBackgroundColor =
         global::Android.Graphics.Color.Rgb(0xF1, 0xF5, 0xF9);
+    private const int DeferredLoadPagesDelayMs = 80;
 
     private readonly Com.Blaze.Pdfviewer.PDFView _pdfView;
     private PdfSource? _source;
@@ -42,8 +43,10 @@ public class PdfViewAndroid : IDisposable
     private bool _isDocumentLoading;
     private bool _pendingReload;
     private int _loadRevision;
+    private int _deferredViewportLoadToken;
 
     private TapListener? _tapListener;
+    private PageScrollListener? _pageScrollListener;
 
     private List<PdfSearchResult> _searchResults = new();
     private List<SearchMatchNativeData> _searchMatchesNative = new();
@@ -302,6 +305,7 @@ public class PdfViewAndroid : IDisposable
 
     public event EventHandler<DocumentLoadedEventArgs>? DocumentLoaded;
     public event EventHandler<PageChangedEventArgs>? PageChanged;
+    public event EventHandler<ViewportChangedEventArgs>? ViewportChanged;
     public event EventHandler<PdfErrorEventArgs>? Error;
     public event EventHandler<LinkTappedEventArgs>? LinkTapped;
     public event EventHandler<PdfTappedEventArgs>? Tapped;
@@ -319,7 +323,68 @@ public class PdfViewAndroid : IDisposable
         if (pageIndex >= 0 && pageIndex < _pageCount)
         {
             _pdfView.JumpTo(pageIndex);
+            _pdfView.Post(() => EmitViewportChanged(pageIndex));
         }
+    }
+
+    public void PanBy(double deltaX, double deltaY)
+    {
+        if (_pageCount <= 0)
+        {
+            return;
+        }
+
+        var dx = (float)deltaX;
+        var dy = (float)deltaY;
+        if (Math.Abs(dx) < 0.01f && Math.Abs(dy) < 0.01f)
+        {
+            return;
+        }
+
+        RunOnMainThread(() =>
+        {
+            _pdfView.MoveRelativeTo(dx, dy);
+            RefreshViewportAfterManualTransform(scheduleFullLoad: true);
+        });
+    }
+
+    public void ZoomBy(double scaleFactor, double centerX, double centerY)
+    {
+        if (_pageCount <= 0 || !_enableZoom)
+        {
+            return;
+        }
+
+        if (double.IsNaN(scaleFactor) || double.IsInfinity(scaleFactor))
+        {
+            return;
+        }
+
+        var factor = (float)scaleFactor;
+        if (factor <= 0f)
+        {
+            return;
+        }
+
+        if (double.IsNaN(centerX) || double.IsNaN(centerY) || double.IsInfinity(centerX) || double.IsInfinity(centerY))
+        {
+            return;
+        }
+
+        RunOnMainThread(() =>
+        {
+            var currentZoom = Math.Max(0.1f, _pdfView.Zoom);
+            var targetZoom = Math.Clamp(currentZoom * factor, _minZoom, _maxZoom);
+            if (Math.Abs(targetZoom - currentZoom) < 0.0005f)
+            {
+                return;
+            }
+
+            var pivot = new global::Android.Graphics.PointF((float)centerX, (float)centerY);
+            _pdfView.ZoomCenteredTo(targetZoom, pivot);
+            _zoom = targetZoom;
+            RefreshViewportAfterManualTransform(scheduleFullLoad: true);
+        });
     }
 
     public void Reload()
@@ -646,6 +711,32 @@ public class PdfViewAndroid : IDisposable
         MainThread.BeginInvokeOnMainThread(action);
     }
 
+    private void RefreshViewportAfterManualTransform(bool scheduleFullLoad)
+    {
+        _pdfView.LoadPageByOffset();
+        if (scheduleFullLoad)
+        {
+            ScheduleDeferredLoadPages();
+        }
+
+        EmitViewportChanged(_currentPage);
+    }
+
+    private void ScheduleDeferredLoadPages()
+    {
+        var token = unchecked(++_deferredViewportLoadToken);
+        _pdfView.PostDelayed(() =>
+        {
+            if (token != _deferredViewportLoadToken || _pageCount <= 0)
+            {
+                return;
+            }
+
+            _pdfView.LoadPages();
+            EmitViewportChanged(_currentPage);
+        }, DeferredLoadPagesDelayMs);
+    }
+
     private void RequestReloadForConfiguration()
     {
         if (_source == null)
@@ -677,6 +768,7 @@ public class PdfViewAndroid : IDisposable
     {
         _isDocumentLoading = false;
         _pendingReload = false;
+        unchecked { _deferredViewportLoadToken++; }
         _pageCount = 0;
         _currentPage = PdfViewDefaults.DefaultPage;
         ClearSearch();
@@ -775,6 +867,7 @@ public class PdfViewAndroid : IDisposable
             .EnableAnnotationRendering(_enableAnnotationRendering)
             .OnLoad(new LoadCompleteListener(this, loadRevision, pageToRestore))
             .OnPageChange(new PageChangeListener(this))
+            .OnPageScroll(_pageScrollListener ??= new PageScrollListener(this))
             .OnError(new ErrorListener(this, loadRevision))
             .OnTap(_enableTapGestures ? _tapListener ??= new TapListener(this) : null)
             .OnRender(new RenderListener(this, loadRevision));
@@ -797,6 +890,7 @@ public class PdfViewAndroid : IDisposable
         _pageCount = pageCount;
         ApplyConfiguredZoom();
         DocumentLoaded?.Invoke(this, new DocumentLoadedEventArgs(pageCount));
+        _pdfView.Post(() => EmitViewportChanged(_currentPage));
         CompleteLoad(loadRevision);
     }
 
@@ -816,6 +910,7 @@ public class PdfViewAndroid : IDisposable
 
         ApplyConfiguredZoom();
         DocumentLoaded?.Invoke(this, new DocumentLoadedEventArgs(pageCount));
+        _pdfView.Post(() => EmitViewportChanged(_currentPage));
         CompleteLoad(loadRevision);
     }
 
@@ -841,6 +936,30 @@ public class PdfViewAndroid : IDisposable
         _currentPage = pageIndex;
         _pageCount = pageCount;
         PageChanged?.Invoke(this, new PageChangedEventArgs(pageIndex, pageCount));
+        EmitViewportChanged(pageIndex);
+    }
+
+    private void OnPageScrolled(int pageIndex, float positionOffset)
+    {
+        _currentPage = pageIndex;
+        EmitViewportChanged(pageIndex, positionOffset);
+    }
+
+    private void EmitViewportChanged(int pageIndex, float positionOffset = 0f)
+    {
+        var offsetX = -_pdfView.CurrentXOffset;
+        var offsetY = -_pdfView.CurrentYOffset;
+        var zoom = Math.Max(0.1f, _pdfView.Zoom);
+        _zoom = Math.Clamp(zoom, _minZoom, _maxZoom);
+        var viewportWidth = Math.Max(1, _pdfView.Width);
+        var viewportHeight = Math.Max(1, _pdfView.Height);
+
+        ViewportChanged?.Invoke(this, new ViewportChangedEventArgs(
+            offsetX,
+            offsetY,
+            zoom,
+            viewportWidth,
+            viewportHeight));
     }
 
     private void OnError(PdfErrorEventArgs args, int? loadRevision = null)
@@ -960,6 +1079,12 @@ public class PdfViewAndroid : IDisposable
             _tapListener = null;
         }
 
+        if (_pageScrollListener != null)
+        {
+            _pageScrollListener.Dispose();
+            _pageScrollListener = null;
+        }
+
         _pdfView?.Dispose();
     }
 
@@ -1029,6 +1154,24 @@ public class PdfViewAndroid : IDisposable
             {
                 var message = t?.Message ?? "Unknown error occurred";
                 view.OnError(new PdfErrorEventArgs(message), _loadRevision);
+            }
+        }
+    }
+
+    private class PageScrollListener : Java.Lang.Object, Com.Blaze.Pdfviewer.Listener.IOnPageScrollListener
+    {
+        private readonly WeakReference<PdfViewAndroid> _viewRef;
+
+        public PageScrollListener(PdfViewAndroid view)
+        {
+            _viewRef = new WeakReference<PdfViewAndroid>(view);
+        }
+
+        public void OnPageScrolled(int page, float positionOffset)
+        {
+            if (_viewRef.TryGetTarget(out var view))
+            {
+                view.OnPageScrolled(page, positionOffset);
             }
         }
     }

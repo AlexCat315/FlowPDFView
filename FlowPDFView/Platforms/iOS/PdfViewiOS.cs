@@ -19,6 +19,7 @@ public class PdfViewiOS : IDisposable
     private UITapGestureRecognizer? _tapGestureRecognizer;
     private UIPanGestureRecognizer? _shiftScrollZoomRecognizer;
     private nfloat _lastShiftScrollTranslationY;
+    private UIScrollView? _nativeScrollView;
     private PdfScrollOrientation _scrollOrientation = PdfViewDefaults.DefaultScrollOrientation;
     private int _defaultPage = PdfViewDefaults.DefaultPage;
     private bool _documentLoaded;
@@ -309,6 +310,7 @@ public class PdfViewiOS : IDisposable
 
     public event EventHandler<DocumentLoadedEventArgs>? DocumentLoaded;
     public event EventHandler<PageChangedEventArgs>? PageChanged;
+    public event EventHandler<ViewportChangedEventArgs>? ViewportChanged;
     public event EventHandler<PdfErrorEventArgs>? Error;
     public event EventHandler<LinkTappedEventArgs>? LinkTapped;
     public event EventHandler<PdfTappedEventArgs>? Tapped;
@@ -329,6 +331,7 @@ public class PdfViewiOS : IDisposable
         if (page != null)
         {
             _pdfView.GoToPage(page);
+            EmitViewportChanged();
         }
     }
 
@@ -776,14 +779,57 @@ public class PdfViewiOS : IDisposable
 
     private void UpdateScrollInteraction()
     {
+        AttachScrollViewEvents();
+        if (_nativeScrollView == null)
+        {
+            return;
+        }
+
+        _nativeScrollView.ScrollEnabled = _enableSwipe;
+        _nativeScrollView.Bounces = _enableSwipe;
+        EmitViewportChanged();
+    }
+
+    private void AttachScrollViewEvents()
+    {
         var scrollView = FindScrollView(_pdfView);
+        if (ReferenceEquals(scrollView, _nativeScrollView))
+        {
+            return;
+        }
+
+        if (_nativeScrollView != null)
+        {
+            _nativeScrollView.Scrolled -= OnNativeScrollViewScrolled;
+        }
+
+        _nativeScrollView = scrollView;
+        if (_nativeScrollView != null)
+        {
+            _nativeScrollView.Scrolled += OnNativeScrollViewScrolled;
+        }
+    }
+
+    private void OnNativeScrollViewScrolled(object? sender, EventArgs e)
+    {
+        EmitViewportChanged();
+    }
+
+    private void EmitViewportChanged()
+    {
+        var scrollView = _nativeScrollView ?? FindScrollView(_pdfView);
         if (scrollView == null)
         {
             return;
         }
 
-        scrollView.ScrollEnabled = _enableSwipe;
-        scrollView.Bounces = _enableSwipe;
+        var zoom = (float)Math.Max(0.1, _pdfView.ScaleFactor);
+        ViewportChanged?.Invoke(this, new ViewportChangedEventArgs(
+            scrollView.ContentOffset.X,
+            scrollView.ContentOffset.Y,
+            zoom,
+            scrollView.Bounds.Width,
+            scrollView.Bounds.Height));
     }
 
     private static UIScrollView? FindScrollView(UIView root)
@@ -845,6 +891,7 @@ public class PdfViewiOS : IDisposable
 
         var factor = (float)Math.Exp(-deltaY * 0.015f);
         Zoom = Math.Clamp(Zoom * factor, MinZoom, MaxZoom);
+        EmitViewportChanged();
     }
 
     private void OnPageChangedNotification(NSNotification notification)
@@ -855,6 +902,7 @@ public class PdfViewiOS : IDisposable
             var pageCount = (int)_pdfView.Document.PageCount;
 
             PageChanged?.Invoke(this, new PageChangedEventArgs(pageIndex, pageCount));
+            EmitViewportChanged();
         }
     }
 
@@ -958,6 +1006,12 @@ public class PdfViewiOS : IDisposable
             _pdfView.RemoveGestureRecognizer(_shiftScrollZoomRecognizer);
             _shiftScrollZoomRecognizer.Dispose();
             _shiftScrollZoomRecognizer = null;
+        }
+
+        if (_nativeScrollView != null)
+        {
+            _nativeScrollView.Scrolled -= OnNativeScrollViewScrolled;
+            _nativeScrollView = null;
         }
 
         _pdfView.WeakDelegate = null;

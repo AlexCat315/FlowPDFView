@@ -38,7 +38,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="$(TargetFramework.Contains('android'))">
-		<ProjectReference Include="..\FlowPDFView.Android.Binding\Flow.PDFView.Android.Binding.csproj" />
+		<ProjectReference Include="..\FlowPDFView.Android.Binding\Flow.PDFView.Android.Binding.csproj" Private="false" />
 	</ItemGroup>
 
 	<ItemGroup>

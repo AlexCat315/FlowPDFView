@@ -73,6 +73,56 @@ public class PageChangedEventArgs : EventArgs
 }
 
 /// <summary>
+/// 视口变化事件参数。
+/// Event arguments for viewport offset/zoom changes.
+/// </summary>
+public class ViewportChangedEventArgs : EventArgs
+{
+    /// <summary>
+    /// 视口左上角相对于文档原点的 X 偏移（像素）。
+    /// X offset from document origin in pixels.
+    /// </summary>
+    public double OffsetX { get; }
+
+    /// <summary>
+    /// 视口左上角相对于文档原点的 Y 偏移（像素）。
+    /// Y offset from document origin in pixels.
+    /// </summary>
+    public double OffsetY { get; }
+
+    /// <summary>
+    /// 当前缩放倍率。
+    /// Current zoom factor.
+    /// </summary>
+    public float Zoom { get; }
+
+    /// <summary>
+    /// 当前可视区域宽度（像素）。
+    /// Viewport width in pixels.
+    /// </summary>
+    public double ViewportWidth { get; }
+
+    /// <summary>
+    /// 当前可视区域高度（像素）。
+    /// Viewport height in pixels.
+    /// </summary>
+    public double ViewportHeight { get; }
+
+    /// <summary>
+    /// 初始化视口变化事件参数。
+    /// Initialize a new instance of ViewportChangedEventArgs.
+    /// </summary>
+    public ViewportChangedEventArgs(double offsetX, double offsetY, float zoom, double viewportWidth, double viewportHeight)
+    {
+        OffsetX = offsetX;
+        OffsetY = offsetY;
+        Zoom = zoom <= 0f ? 1f : zoom;
+        ViewportWidth = Math.Max(0d, viewportWidth);
+        ViewportHeight = Math.Max(0d, viewportHeight);
+    }
+}
+
+/// <summary>
 /// PDF 错误事件参数。
 /// Event arguments for PDF-related errors.
 /// </summary>

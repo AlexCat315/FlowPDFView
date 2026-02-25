@@ -57,6 +57,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
 
         _pdfViewWrapper.DocumentLoaded += OnDocumentLoaded;
         _pdfViewWrapper.PageChanged += OnPageChanged;
+        _pdfViewWrapper.ViewportChanged += OnViewportChanged;
         _pdfViewWrapper.Error += OnError;
         _pdfViewWrapper.LinkTapped += OnLinkTapped;
         _pdfViewWrapper.Tapped += OnTapped;
@@ -106,6 +107,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         {
             _pdfViewWrapper.DocumentLoaded -= OnDocumentLoaded;
             _pdfViewWrapper.PageChanged -= OnPageChanged;
+            _pdfViewWrapper.ViewportChanged -= OnViewportChanged;
             _pdfViewWrapper.Error -= OnError;
             _pdfViewWrapper.LinkTapped -= OnLinkTapped;
             _pdfViewWrapper.Tapped -= OnTapped;
@@ -128,6 +130,11 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
     private void OnPageChanged(object? sender, PageChangedEventArgs e)
     {
         VirtualView?.RaisePageChanged(e);
+    }
+
+    private void OnViewportChanged(object? sender, ViewportChangedEventArgs e)
+    {
+        VirtualView?.RaiseViewportChanged(e);
     }
 
     private void OnError(object? sender, PdfErrorEventArgs e)
