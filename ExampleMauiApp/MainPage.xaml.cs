@@ -1,4 +1,6 @@
-﻿using Flow.PDFView.Abstractions;
+﻿using System.Globalization;
+using Flow.PDFView.Abstractions;
+using ExampleMauiApp.Resources;
 using PdfPageChangedEventArgs = Flow.PDFView.Abstractions.PageChangedEventArgs;
 #if MACCATALYST
 using Foundation;
@@ -21,9 +23,47 @@ public partial class MainPage : ContentPage
 	{
 		InitializeComponent();
 		InitializeControls();
+		UpdateLocalizedStrings();
 		PdfViewer.SearchResultsFound += OnSearchResultsFound;
 		PdfViewer.SearchProgress += OnSearchProgress;
 		Loaded += OnPageLoaded;
+		LanguageManager.LanguageChanged += OnLanguageChanged;
+	}
+
+	private void OnLanguageChanged()
+	{
+		UpdateLocalizedStrings();
+	}
+
+	private void UpdateLocalizedStrings()
+	{
+		ToolbarToggleButton.Text = AppResources.ToolbarToggle;
+		ToolbarTitleLabel.Text = AppResources.ToolbarTitle;
+		CloseButton.Text = AppResources.Close;
+		UrlEntry.Placeholder = AppResources.UrlPlaceholder;
+		LoadUrlButton.Text = AppResources.LoadUrl;
+		SearchEntry.Placeholder = AppResources.SearchPlaceholder;
+		SearchButton.Text = AppResources.Search;
+		ClearButton.Text = AppResources.Clear;
+		SearchPrevButton.Text = AppResources.Previous;
+		SearchNextButton.Text = AppResources.Next;
+		HighlightLabel.Text = AppResources.Highlight;
+		SearchStatusLabel.Text = AppResources.SearchStatus;
+		LoadSampleButton.Text = AppResources.LoadSample;
+		LocalFileButton.Text = AppResources.LocalFile;
+		ReloadButton.Text = AppResources.Reload;
+		PrevPageButton.Text = AppResources.PreviousPage;
+		NextPageButton.Text = AppResources.NextPage;
+		SourceInfoLabel.Text = AppResources.SourceNotLoaded;
+		DisplayModePicker.Title = AppResources.DisplayMode;
+		OrientationPicker.Title = AppResources.ScrollOrientation;
+		FitPolicyPicker.Title = AppResources.FitPolicy;
+		LanguageLabel.Text = AppResources.Language;
+		ZoomLabel.Text = AppResources.Zoom;
+		SwipeLabel.Text = AppResources.Swipe;
+		LinkLabel.Text = AppResources.Link;
+		PageInfoLabel.Text = AppResources.PageInfo;
+		EventInfoLabel.Text = AppResources.StatusWaiting;
 	}
 
 	private void InitializeControls()
@@ -77,15 +117,15 @@ public partial class MainPage : ContentPage
 	{
 		if (!Uri.TryCreate(input, UriKind.Absolute, out var uri))
 		{
-			SetStatus("URL 无效");
+			SetStatus(AppResources.InvalidUrl);
 			if (showAlertOnError)
-				await DisplayAlertAsync("URL 无效", "请输入完整的绝对 URL。", "确定");
+				await DisplayAlertAsync(AppResources.InvalidUrl, AppResources.EnterFullUrl, "OK");
 			return;
 		}
 
 		PdfViewer.Source = new UriPdfSource(uri);
-		SourceInfoLabel.Text = $"来源: URL ({uri.Host})";
-		SetStatus("正在加载 URL PDF...");
+		SourceInfoLabel.Text = $"{AppResources.Source}: URL ({uri.Host})";
+		SetStatus(AppResources.LoadingUrlPdf);
 	}
 
 	private async void OnPickFileClicked(object? sender, EventArgs e)
@@ -96,29 +136,29 @@ public partial class MainPage : ContentPage
 			var picked = await PickPdfWithNativePickerAsync();
 			if (picked is null)
 			{
-				SetStatus("已取消文件选择");
+				SetStatus(AppResources.FileSelectionCancelled);
 				return;
 			}
 
 			PdfViewer.Source = new BytesPdfSource(picked.Data);
-			SourceInfoLabel.Text = $"来源: 本地文件 ({picked.FileName})";
-			SetStatus("正在加载本地 PDF...");
+			SourceInfoLabel.Text = $"{AppResources.Source}: {AppResources.LocalFile} ({picked.FileName})";
+			SetStatus(AppResources.LoadingLocalPdf);
 			return;
 #else
 			var result = await FilePicker.Default.PickAsync(new PickOptions
 			{
-				PickerTitle = "选择一个 PDF 文件"
+				PickerTitle = AppResources.SelectPdfFile
 			});
 
 			if (result is null)
 			{
-				SetStatus("已取消文件选择");
+				SetStatus(AppResources.FileSelectionCancelled);
 				return;
 			}
 
 			if (!string.Equals(Path.GetExtension(result.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
 			{
-				SetStatus("请选择 .pdf 文件");
+				SetStatus(AppResources.SelectPdfFileOnly);
 				return;
 			}
 
@@ -128,18 +168,18 @@ public partial class MainPage : ContentPage
 			var data = memory.ToArray();
 			if (data.Length == 0)
 			{
-				SetStatus("选择文件失败: 文件为空");
+				SetStatus(AppResources.FileEmpty);
 				return;
 			}
 
 			PdfViewer.Source = new BytesPdfSource(data);
-			SourceInfoLabel.Text = $"来源: 本地文件 ({result.FileName})";
-			SetStatus("正在加载本地 PDF...");
+			SourceInfoLabel.Text = $"{AppResources.Source}: {AppResources.LocalFile} ({result.FileName})";
+			SetStatus(AppResources.LoadingLocalPdf);
 #endif
 		}
 		catch (Exception ex)
 		{
-			SetStatus($"选择文件失败: {ex.Message}");
+			SetStatus($"{AppResources.SelectFileFailed}: {ex.Message}");
 		}
 	}
 
@@ -247,7 +287,7 @@ public partial class MainPage : ContentPage
 	private void OnReloadClicked(object? sender, EventArgs e)
 	{
 		PdfViewer.Reload();
-		SetStatus("已触发重载");
+		SetStatus(AppResources.ReloadTriggered);
 	}
 
 	private void OnToolbarToggleClicked(object? sender, EventArgs e)
@@ -266,13 +306,13 @@ public partial class MainPage : ContentPage
 		var query = SearchEntry.Text?.Trim();
 		if (string.IsNullOrWhiteSpace(query))
 		{
-			SetSearchStatus("搜索: 请输入关键词");
+			SetSearchStatus(AppResources.SearchEnterKeyword);
 			return;
 		}
 
 		if (!PdfViewer.IsSearchSupported)
 		{
-			SetSearchStatus("搜索: 当前平台暂不支持");
+			SetSearchStatus(AppResources.SearchNotSupported);
 			return;
 		}
 
@@ -292,16 +332,16 @@ public partial class MainPage : ContentPage
 			if (_currentSearchIndex >= 0)
 			{
 				PdfViewer.GoToSearchResult(_currentSearchIndex);
-				SetSearchStatus($"搜索: 命中 {_searchResults.Count} 项，当前 1/{_searchResults.Count}");
+				SetSearchStatus(AppResources.SearchResultsFoundFormat.Replace("{0}", _searchResults.Count.ToString()).Replace("{1}", "1").Replace("{2}", _searchResults.Count.ToString()));
 			}
 			else
 			{
-				SetSearchStatus("搜索: 未找到结果");
+				SetSearchStatus(AppResources.SearchNoResults);
 			}
 		}
 		catch (Exception ex)
 		{
-			SetSearchStatus($"搜索失败: {ex.Message}");
+			SetSearchStatus(AppResources.SearchFailed + $": {ex.Message}");
 		}
 	}
 
@@ -320,7 +360,7 @@ public partial class MainPage : ContentPage
 		_searchResults = Array.Empty<PdfSearchResult>();
 		_currentSearchIndex = -1;
 		UpdateSearchNavState();
-		SetSearchStatus("搜索: 已清除");
+		SetSearchStatus(AppResources.SearchCleared);
 		PdfViewer.ClearSearch();
 	}
 
@@ -328,12 +368,12 @@ public partial class MainPage : ContentPage
 	{
 		if (!PdfViewer.IsSearchSupported)
 		{
-			SetSearchStatus("搜索高亮: 当前平台暂不支持");
+			SetSearchStatus(AppResources.SearchHighlightNotSupported);
 			return;
 		}
 
 		PdfViewer.HighlightSearchResults(e.Value);
-		SetSearchStatus($"搜索高亮: {(e.Value ? "已开启" : "已关闭")}");
+		SetSearchStatus(AppResources.SearchHighlight + $": {(e.Value ? AppResources.Enabled : AppResources.Disabled)}");
 	}
 
 	private void OnPrevPageClicked(object? sender, EventArgs e)
@@ -361,7 +401,7 @@ public partial class MainPage : ContentPage
 			return;
 
 		PdfViewer.DisplayMode = (PdfDisplayMode)DisplayModePicker.SelectedIndex;
-		SetStatus($"显示模式: {PdfViewer.DisplayMode}");
+		SetStatus(AppResources.DisplayModeFormat.Replace("{0}", PdfViewer.DisplayMode.ToString()));
 	}
 
 	private void OnOrientationChanged(object? sender, EventArgs e)
@@ -370,7 +410,7 @@ public partial class MainPage : ContentPage
 			return;
 
 		PdfViewer.ScrollOrientation = (PdfScrollOrientation)OrientationPicker.SelectedIndex;
-		SetStatus($"滚动方向: {PdfViewer.ScrollOrientation}");
+		SetStatus(AppResources.OrientationFormat.Replace("{0}", PdfViewer.ScrollOrientation.ToString()));
 	}
 
 	private void OnFitPolicyChanged(object? sender, EventArgs e)
@@ -379,25 +419,25 @@ public partial class MainPage : ContentPage
 			return;
 
 		PdfViewer.FitPolicy = (FitPolicy)FitPolicyPicker.SelectedIndex;
-		SetStatus($"适配策略: {PdfViewer.FitPolicy}");
+		SetStatus(AppResources.FitPolicyFormat.Replace("{0}", PdfViewer.FitPolicy.ToString()));
 	}
 
 	private void OnEnableZoomToggled(object? sender, ToggledEventArgs e)
 	{
 		PdfViewer.EnableZoom = e.Value;
-		SetStatus($"启用缩放: {(e.Value ? "是" : "否")}");
+		SetStatus(AppResources.EnableZoomFormat.Replace("{0}", e.Value ? AppResources.Yes : AppResources.No));
 	}
 
 	private void OnEnableSwipeToggled(object? sender, ToggledEventArgs e)
 	{
 		PdfViewer.EnableSwipe = e.Value;
-		SetStatus($"启用滑动: {(e.Value ? "是" : "否")}");
+		SetStatus(AppResources.EnableSwipeFormat.Replace("{0}", e.Value ? AppResources.Yes : AppResources.No));
 	}
 
 	private void OnEnableLinkToggled(object? sender, ToggledEventArgs e)
 	{
 		PdfViewer.EnableLinkNavigation = e.Value;
-		SetStatus($"启用链接跳转: {(e.Value ? "是" : "否")}");
+		SetStatus(AppResources.EnableLinkFormat.Replace("{0}", e.Value ? AppResources.Yes : AppResources.No));
 	}
 
 	private void OnZoomSliderValueChanged(object? sender, ValueChangedEventArgs e)
@@ -412,7 +452,7 @@ public partial class MainPage : ContentPage
 		_totalPageCount = e.PageCount;
 		_currentPageIndex = Math.Clamp(PdfViewer.CurrentPage, 0, Math.Max(0, _totalPageCount - 1));
 		UpdatePageIndicators();
-		SetStatus($"文档加载完成，共 {_totalPageCount} 页");
+		SetStatus(AppResources.DocumentLoadedFormat.Replace("{0}", _totalPageCount.ToString()));
 	}
 
 	private void OnPageChanged(object? sender, PdfPageChangedEventArgs e)
@@ -424,7 +464,7 @@ public partial class MainPage : ContentPage
 
 	private void OnPdfError(object? sender, PdfErrorEventArgs e)
 	{
-		SetStatus($"加载失败: {e.Message}");
+		SetStatus(AppResources.LoadFailed + $": {e.Message}");
 	}
 
 	private void OnSearchResultsFound(object? sender, PdfSearchResultsEventArgs e)
@@ -437,11 +477,11 @@ public partial class MainPage : ContentPage
 
 			if (_searchResults.Count > 0)
 			{
-				SetSearchStatus($"搜索: 命中 {_searchResults.Count} 项，当前 {_currentSearchIndex + 1}/{_searchResults.Count}");
+				SetSearchStatus(AppResources.SearchResultsFoundFormat.Replace("{0}", _searchResults.Count.ToString()).Replace("{1}", (_currentSearchIndex + 1).ToString()).Replace("{2}", _searchResults.Count.ToString()));
 			}
 			else if (!string.IsNullOrWhiteSpace(e.Query))
 			{
-				SetSearchStatus("搜索: 未找到结果");
+				SetSearchStatus(AppResources.SearchNoResults);
 			}
 		});
 	}
@@ -450,8 +490,10 @@ public partial class MainPage : ContentPage
 	{
 		if (_currentSearchIndex < 0)
 		{
-			MainThread.BeginInvokeOnMainThread(() =>
-				SetSearchStatus($"搜索中: {e.CurrentPage}/{e.TotalPages}，命中 {e.ResultCount}"));
+		MainThread.BeginInvokeOnMainThread(() =>
+		{
+			SetSearchStatus(AppResources.SearchProgressFormat.Replace("{0}", e.CurrentPage.ToString()).Replace("{1}", e.TotalPages.ToString()).Replace("{2}", e.ResultCount.ToString()));
+		});
 		}
 	}
 
@@ -459,7 +501,7 @@ public partial class MainPage : ContentPage
 	{
 		if (_totalPageCount <= 0)
 		{
-			PageInfoLabel.Text = "页码: - / -";
+			PageInfoLabel.Text = AppResources.PageInfoFormat.Replace("{1}", "0").Replace("{2}", "0");
 			PrevPageButton.IsEnabled = false;
 			NextPageButton.IsEnabled = false;
 			return;
@@ -467,14 +509,14 @@ public partial class MainPage : ContentPage
 
 		// 按控件当前页刷新状态，确保按钮可用性与实际渲染页一致。
 		_currentPageIndex = Math.Clamp(PdfViewer.CurrentPage, 0, Math.Max(0, _totalPageCount - 1));
-		PageInfoLabel.Text = $"页码: {_currentPageIndex + 1} / {_totalPageCount}";
+		PageInfoLabel.Text = string.Format(AppResources.PageInfoFormat, _currentPageIndex + 1, _totalPageCount);
 		PrevPageButton.IsEnabled = _currentPageIndex > 0;
 		NextPageButton.IsEnabled = _currentPageIndex + 1 < _totalPageCount;
 	}
 
 	private void SetStatus(string message)
 	{
-		EventInfoLabel.Text = $"状态: {message}";
+		EventInfoLabel.Text = AppResources.StatusMessage.Replace("{0}", message);
 	}
 
 	private void SetToolbarVisible(bool isVisible)
@@ -505,6 +547,16 @@ public partial class MainPage : ContentPage
 
 		_currentSearchIndex = (_currentSearchIndex + offset + _searchResults.Count) % _searchResults.Count;
 		PdfViewer.GoToSearchResult(_currentSearchIndex);
-		SetSearchStatus($"搜索: 命中 {_searchResults.Count} 项，当前 {_currentSearchIndex + 1}/{_searchResults.Count}");
+		SetSearchStatus(AppResources.SearchResultsFoundFormat.Replace("{0}", _searchResults.Count.ToString()).Replace("{1}", (_currentSearchIndex + 1).ToString()).Replace("{2}", _searchResults.Count.ToString()));
+	}
+
+	private void OnLangEnClicked(object? sender, EventArgs e)
+	{
+		LanguageManager.SetCulture(new CultureInfo("en-US"));
+	}
+
+	private void OnLangZhClicked(object? sender, EventArgs e)
+	{
+		LanguageManager.SetCulture(new CultureInfo("zh-CN"));
 	}
 }
