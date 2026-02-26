@@ -335,6 +335,99 @@ public class PdfViewiOS : IDisposable
         }
     }
 
+    public void PanBy(double deltaX, double deltaY)
+    {
+        if (_pdfView.Document == null)
+        {
+            return;
+        }
+
+        if (double.IsNaN(deltaX) || double.IsInfinity(deltaX) ||
+            double.IsNaN(deltaY) || double.IsInfinity(deltaY))
+        {
+            return;
+        }
+
+        if (Math.Abs(deltaX) < 0.01 && Math.Abs(deltaY) < 0.01)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            AttachScrollViewEvents();
+            var scrollView = _nativeScrollView;
+            if (scrollView == null)
+            {
+                return;
+            }
+
+            var currentOffset = scrollView.ContentOffset;
+            var maxX = Math.Max(0d, scrollView.ContentSize.Width - scrollView.Bounds.Width);
+            var maxY = Math.Max(0d, scrollView.ContentSize.Height - scrollView.Bounds.Height);
+            var targetX = Math.Clamp((double)currentOffset.X + deltaX, 0d, maxX);
+            var targetY = Math.Clamp((double)currentOffset.Y + deltaY, 0d, maxY);
+
+            scrollView.SetContentOffset(new CoreGraphics.CGPoint(targetX, targetY), false);
+            EmitViewportChanged();
+        });
+    }
+
+    public void ZoomBy(double scaleFactor, double centerX, double centerY)
+    {
+        if (_pdfView.Document == null || !_enableZoom)
+        {
+            return;
+        }
+
+        if (double.IsNaN(scaleFactor) || double.IsInfinity(scaleFactor) || scaleFactor <= 0d)
+        {
+            return;
+        }
+
+        if (double.IsNaN(centerX) || double.IsInfinity(centerX) ||
+            double.IsNaN(centerY) || double.IsInfinity(centerY))
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            var currentZoom = Math.Max(0.1f, (float)_pdfView.ScaleFactor);
+            var targetZoom = Math.Clamp(currentZoom * (float)scaleFactor, MinZoom, MaxZoom);
+            if (Math.Abs(targetZoom - currentZoom) < 0.0005f)
+            {
+                return;
+            }
+
+            AttachScrollViewEvents();
+            var scrollView = _nativeScrollView;
+            CoreGraphics.CGPoint? contentPoint = null;
+            if (scrollView != null)
+            {
+                contentPoint = new CoreGraphics.CGPoint(
+                    scrollView.ContentOffset.X + centerX,
+                    scrollView.ContentOffset.Y + centerY);
+            }
+
+            _pdfView.ScaleFactor = targetZoom;
+
+            if (scrollView != null && contentPoint.HasValue)
+            {
+                var ratio = targetZoom / currentZoom;
+                var scaledPointX = contentPoint.Value.X * ratio;
+                var scaledPointY = contentPoint.Value.Y * ratio;
+                var maxX = Math.Max(0d, scrollView.ContentSize.Width - scrollView.Bounds.Width);
+                var maxY = Math.Max(0d, scrollView.ContentSize.Height - scrollView.Bounds.Height);
+                var targetOffsetX = Math.Clamp(scaledPointX - centerX, 0d, maxX);
+                var targetOffsetY = Math.Clamp(scaledPointY - centerY, 0d, maxY);
+                scrollView.SetContentOffset(new CoreGraphics.CGPoint(targetOffsetX, targetOffsetY), false);
+            }
+
+            EmitViewportChanged();
+        });
+    }
+
     public void Reload()
     {
         LoadDocument();

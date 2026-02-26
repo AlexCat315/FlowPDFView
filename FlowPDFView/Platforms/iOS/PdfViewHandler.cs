@@ -39,6 +39,8 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
     public static CommandMapper<PdfView, PdfViewHandler> CommandMapper = new(ViewCommandMapper)
     {
         [nameof(IPdfView.GoToPage)] = MapGoToPage,
+        [nameof(IPdfView.PanBy)] = MapPanBy,
+        [nameof(IPdfView.ZoomBy)] = MapZoomBy,
         [nameof(IPdfView.Reload)] = MapReload
     };
 
@@ -313,6 +315,28 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         if (handler._pdfViewWrapper != null && args is int pageIndex)
         {
             handler._pdfViewWrapper.GoToPage(pageIndex);
+        }
+    }
+
+    public static void MapPanBy(PdfViewHandler handler, PdfView view, object? args)
+    {
+        if (handler._pdfViewWrapper == null)
+            return;
+
+        if (args is ValueTuple<double, double> delta)
+        {
+            handler._pdfViewWrapper.PanBy(delta.Item1, delta.Item2);
+        }
+    }
+
+    public static void MapZoomBy(PdfViewHandler handler, PdfView view, object? args)
+    {
+        if (handler._pdfViewWrapper == null)
+            return;
+
+        if (args is ValueTuple<double, double, double> zoom)
+        {
+            handler._pdfViewWrapper.ZoomBy(zoom.Item1, zoom.Item2, zoom.Item3);
         }
     }
 

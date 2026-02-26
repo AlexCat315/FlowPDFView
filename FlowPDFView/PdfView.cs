@@ -355,6 +355,11 @@ namespace Flow.PDFView
         public event EventHandler<PageChangedEventArgs>? PageChanged;
 
         /// <summary>
+        /// 视口变化事件（滚动/缩放）
+        /// </summary>
+        public event EventHandler<ViewportChangedEventArgs>? ViewportChanged;
+
+        /// <summary>
         /// 错误事件
         /// </summary>
         public event EventHandler<PdfErrorEventArgs>? Error;
@@ -401,6 +406,22 @@ namespace Flow.PDFView
         public void GoToPage(int pageIndex)
         {
             Handler?.Invoke(nameof(IPdfView.GoToPage), pageIndex);
+        }
+
+        /// <summary>
+        /// 在当前视口基础上平移（单位：像素）
+        /// </summary>
+        public void PanBy(double deltaX, double deltaY)
+        {
+            Handler?.Invoke(nameof(IPdfView.PanBy), (deltaX, deltaY));
+        }
+
+        /// <summary>
+        /// 以指定中心点执行相对缩放
+        /// </summary>
+        public void ZoomBy(double scaleFactor, double centerX, double centerY)
+        {
+            Handler?.Invoke(nameof(IPdfView.ZoomBy), (scaleFactor, centerX, centerY));
         }
 
         /// <summary>
@@ -465,6 +486,14 @@ namespace Flow.PDFView
             CurrentPage = args.PageIndex;
             PageCount = args.PageCount;
             PageChanged?.Invoke(this, args);
+        }
+
+        /// <summary>
+        /// 触发视口变化事件
+        /// </summary>
+        internal void RaiseViewportChanged(ViewportChangedEventArgs args)
+        {
+            ViewportChanged?.Invoke(this, args);
         }
 
         /// <summary>
