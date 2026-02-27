@@ -1,5 +1,6 @@
 using Flow.PDFView.Abstractions;
 using System.Windows.Input;
+using System.IO;
 
 namespace Flow.PDFView
 {
@@ -433,6 +434,16 @@ namespace Flow.PDFView
         }
 
         /// <summary>
+        /// Returns whether a viewport point is inside a rendered PDF page region.
+        /// </summary>
+        /// <param name="viewX">X coordinate in view space (pixels).</param>
+        /// <param name="viewY">Y coordinate in view space (pixels).</param>
+        public bool IsPointOnDocument(double viewX, double viewY)
+        {
+            return _platformFeatures.IsPointOnDocument(viewX, viewY);
+        }
+
+        /// <summary>
         /// 异步搜索文本
         /// </summary>
         /// <param name="query">搜索关键词</param>
@@ -467,6 +478,22 @@ namespace Flow.PDFView
         public void GoToSearchResult(int resultIndex)
         {
             _platformFeatures.GoToSearchResult(resultIndex);
+        }
+
+        /// <summary>
+        /// 获取指定页的缩略图。
+        /// </summary>
+        public Task<Stream?> GetThumbnailAsync(int pageIndex, int width, int height)
+        {
+            return _platformFeatures.GetThumbnailAsync(pageIndex, width, height);
+        }
+
+        /// <summary>
+        /// 获取指定页面在文档坐标中的边界（缩放 1.0）。
+        /// </summary>
+        public Task<PdfPageBounds?> GetPageBoundsAsync(int pageIndex)
+        {
+            return _platformFeatures.GetPageBoundsAsync(pageIndex);
         }
 
         /// <summary>

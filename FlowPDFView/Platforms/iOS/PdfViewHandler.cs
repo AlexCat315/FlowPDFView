@@ -4,6 +4,7 @@ using Microsoft.Maui.Handlers;
 using PdfKit;
 using UIKit;
 using Foundation;
+using System.IO;
 
 namespace Flow.PDFView.Platforms.iOS;
 
@@ -356,6 +357,11 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
 
         public bool IsSearchSupported => true;
 
+        public bool IsPointOnDocument(double viewX, double viewY)
+        {
+            return true;
+        }
+
         public Task<IReadOnlyList<PdfSearchResult>> SearchAsync(string query, PdfSearchOptions? options = null)
         {
             return _wrapper.SearchAsync(query, options);
@@ -374,6 +380,16 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         public void GoToSearchResult(int resultIndex)
         {
             _wrapper.GoToSearchResult(resultIndex);
+        }
+
+        public Task<Stream?> GetThumbnailAsync(int pageIndex, int width, int height)
+        {
+            return Task.FromResult<Stream?>(null);
+        }
+
+        public Task<PdfPageBounds?> GetPageBoundsAsync(int pageIndex)
+        {
+            return Task.FromResult<PdfPageBounds?>(null);
         }
     }
 }

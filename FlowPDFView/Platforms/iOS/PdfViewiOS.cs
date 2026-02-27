@@ -63,7 +63,7 @@ public class PdfViewiOS : IDisposable
             {
                 AllowedScrollTypesMask = UIScrollTypeMask.All,
                 CancelsTouchesInView = false,
-                Delegate = new SimultaneousGestureDelegate(),
+                Delegate = new ShiftOnlyGestureDelegate(),
             };
             _pdfView.AddGestureRecognizer(_shiftScrollZoomRecognizer);
         }
@@ -1111,8 +1111,23 @@ public class PdfViewiOS : IDisposable
         _pdfView?.Dispose();
     }
 
-    private sealed class SimultaneousGestureDelegate : UIGestureRecognizerDelegate
+    private sealed class ShiftOnlyGestureDelegate : UIGestureRecognizerDelegate
     {
+        public override bool ShouldBegin(UIGestureRecognizer recognizer)
+        {
+            if (!OperatingSystem.IsIOSVersionAtLeast(13, 4))
+            {
+                return false;
+            }
+
+            if (recognizer is UIPanGestureRecognizer panRecognizer)
+            {
+                return panRecognizer.ModifierFlags.HasFlag(UIKeyModifierFlags.Shift);
+            }
+
+            return false;
+        }
+
         public override bool ShouldRecognizeSimultaneously(UIGestureRecognizer gestureRecognizer, UIGestureRecognizer otherGestureRecognizer)
         {
             return true;

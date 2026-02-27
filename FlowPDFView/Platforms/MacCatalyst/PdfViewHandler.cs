@@ -1,10 +1,12 @@
 using System.Net.Http;
+using System.Diagnostics;
 using Foundation;
 using Flow.PDFView.Abstractions;
 using Flow.PDFView.Helpers;
 using Microsoft.Maui.Handlers;
 using PdfKit;
 using UIKit;
+using System.IO;
 
 namespace Flow.PDFView.Platforms.MacCatalyst;
 
@@ -44,6 +46,8 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
     public static readonly CommandMapper<PdfView, PdfViewHandler> CommandMapper = new(ViewCommandMapper)
     {
         [nameof(IPdfView.GoToPage)] = MapGoToPage,
+        [nameof(IPdfView.PanBy)] = MapPanBy,
+        [nameof(IPdfView.ZoomBy)] = MapZoomBy,
         [nameof(IPdfView.Reload)] = MapReload,
     };
 
@@ -55,8 +59,10 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
     private UITapGestureRecognizer? _tapGestureRecognizer;
     private UIPanGestureRecognizer? _shiftScrollZoomRecognizer;
     private UIView? _shiftScrollZoomGestureHost;
+    private UIScrollView? _nativeScrollView;
     private nfloat _lastShiftScrollTranslationX;
     private nfloat _lastShiftScrollTranslationY;
+    private DateTime _lastViewportLogUtc = DateTime.MinValue;
 
     private bool _isScrolling;
     private bool _isPageIndexLocked;
@@ -110,7 +116,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         {
             AllowedScrollTypesMask = UIScrollTypeMask.All,
             CancelsTouchesInView = false,
-            Delegate = new SimultaneousGestureDelegate(),
+            Delegate = new ShiftOnlyGestureDelegate(),
         };
         AttachShiftScrollZoomRecognizer(pdfView);
 
@@ -147,6 +153,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         MapPageAppearance(this, VirtualView);
         MapSource(this, VirtualView);
         MapUri(this, VirtualView);
+        AttachScrollViewEvents();
     }
 
     protected override void DisconnectHandler(PdfKit.PdfView platformView)
@@ -179,6 +186,12 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
             _shiftScrollZoomGestureHost = null;
             _shiftScrollZoomRecognizer.Dispose();
             _shiftScrollZoomRecognizer = null;
+        }
+
+        if (_nativeScrollView != null)
+        {
+            _nativeScrollView.Scrolled -= OnNativeScrollViewScrolled;
+            _nativeScrollView = null;
         }
 
         platformView.WeakDelegate = null;
@@ -364,6 +377,26 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         }
     }
 
+    private static void MapPanBy(PdfViewHandler handler, PdfView pdfView, object? args)
+    {
+        if (args is not ValueTuple<double, double> delta)
+        {
+            return;
+        }
+
+        handler.PanBy(delta.Item1, delta.Item2);
+    }
+
+    private static void MapZoomBy(PdfViewHandler handler, PdfView pdfView, object? args)
+    {
+        if (args is not ValueTuple<double, double, double> zoom)
+        {
+            return;
+        }
+
+        handler.ZoomBy(zoom.Item1, zoom.Item2, zoom.Item3);
+    }
+
     private static void MapReload(PdfViewHandler handler, PdfView pdfView, object? args)
     {
         if (pdfView.Source != null)
@@ -530,6 +563,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
                 {
                     PlatformView.Document = document;
                     AttachShiftScrollZoomRecognizer(PlatformView);
+                    AttachScrollViewEvents();
                     ApplyFitPolicy();
                     ApplyPageAppearance();
                     ApplyZoomSettings();
@@ -548,6 +582,8 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
                     {
                         VirtualView?.RaisePageChanged(new Abstractions.PageChangedEventArgs(0, pageCount));
                     }
+
+                    EmitViewportChanged("document-loaded");
                 });
             }
             catch (Exception ex)
@@ -600,11 +636,14 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         {
             PlatformView.ScaleFactor = clamped;
         }
+
+        EmitViewportChanged("apply-zoom-settings");
     }
 
     private void ApplySwipeSettings()
     {
-        var scrollView = FindScrollView(PlatformView);
+        AttachScrollViewEvents();
+        var scrollView = _nativeScrollView;
         if (scrollView == null)
         {
             return;
@@ -612,6 +651,100 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
 
         scrollView.ScrollEnabled = _enableSwipe;
         scrollView.Bounces = _enableSwipe;
+        EmitViewportChanged("apply-swipe-settings");
+    }
+
+    private void PanBy(double deltaX, double deltaY)
+    {
+        if (PlatformView.Document == null)
+        {
+            return;
+        }
+
+        if (double.IsNaN(deltaX) || double.IsInfinity(deltaX)
+            || double.IsNaN(deltaY) || double.IsInfinity(deltaY))
+        {
+            return;
+        }
+
+        if (Math.Abs(deltaX) < 0.01 && Math.Abs(deltaY) < 0.01)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            AttachScrollViewEvents();
+            var scrollView = _nativeScrollView;
+            if (scrollView == null)
+            {
+                return;
+            }
+
+            var currentOffset = scrollView.ContentOffset;
+            var maxX = Math.Max(0d, scrollView.ContentSize.Width - scrollView.Bounds.Width);
+            var maxY = Math.Max(0d, scrollView.ContentSize.Height - scrollView.Bounds.Height);
+            var targetX = Math.Clamp((double)currentOffset.X + deltaX, 0d, maxX);
+            var targetY = Math.Clamp((double)currentOffset.Y + deltaY, 0d, maxY);
+
+            scrollView.SetContentOffset(new CoreGraphics.CGPoint(targetX, targetY), false);
+            EmitViewportChanged("pan-by");
+        });
+    }
+
+    private void ZoomBy(double scaleFactor, double centerX, double centerY)
+    {
+        if (PlatformView.Document == null || !_enableZoom)
+        {
+            return;
+        }
+
+        if (double.IsNaN(scaleFactor) || double.IsInfinity(scaleFactor) || scaleFactor <= 0d)
+        {
+            return;
+        }
+
+        if (double.IsNaN(centerX) || double.IsInfinity(centerX)
+            || double.IsNaN(centerY) || double.IsInfinity(centerY))
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            AttachScrollViewEvents();
+            var currentZoom = Math.Max(0.1f, (float)PlatformView.ScaleFactor);
+            var targetZoom = Math.Clamp(currentZoom * (float)scaleFactor, Math.Max(0.1f, _minZoom), Math.Max(_minZoom, _maxZoom));
+            if (Math.Abs(targetZoom - currentZoom) < 0.0005f)
+            {
+                return;
+            }
+
+            var scrollView = _nativeScrollView;
+            CoreGraphics.CGPoint? contentPoint = null;
+            if (scrollView != null)
+            {
+                contentPoint = new CoreGraphics.CGPoint(
+                    scrollView.ContentOffset.X + centerX,
+                    scrollView.ContentOffset.Y + centerY);
+            }
+
+            PlatformView.ScaleFactor = targetZoom;
+
+            if (scrollView != null && contentPoint.HasValue)
+            {
+                var ratio = targetZoom / currentZoom;
+                var scaledPointX = contentPoint.Value.X * ratio;
+                var scaledPointY = contentPoint.Value.Y * ratio;
+                var maxX = Math.Max(0d, scrollView.ContentSize.Width - scrollView.Bounds.Width);
+                var maxY = Math.Max(0d, scrollView.ContentSize.Height - scrollView.Bounds.Height);
+                var targetOffsetX = Math.Clamp(scaledPointX - centerX, 0d, maxX);
+                var targetOffsetY = Math.Clamp(scaledPointY - centerY, 0d, maxY);
+                scrollView.SetContentOffset(new CoreGraphics.CGPoint(targetOffsetX, targetOffsetY), false);
+            }
+
+            EmitViewportChanged("zoom-by");
+        });
     }
 
     private static UIScrollView? FindScrollView(UIView root)
@@ -631,6 +764,59 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         }
 
         return null;
+    }
+
+    private void AttachScrollViewEvents()
+    {
+        var scrollView = FindScrollView(PlatformView);
+        if (ReferenceEquals(scrollView, _nativeScrollView))
+        {
+            return;
+        }
+
+        if (_nativeScrollView != null)
+        {
+            _nativeScrollView.Scrolled -= OnNativeScrollViewScrolled;
+        }
+
+        _nativeScrollView = scrollView;
+        if (_nativeScrollView != null)
+        {
+            _nativeScrollView.Scrolled += OnNativeScrollViewScrolled;
+            LogGesture("native-scroll-attached");
+            EmitViewportChanged("attach-scroll-view");
+        }
+    }
+
+    private void OnNativeScrollViewScrolled(object? sender, EventArgs e)
+    {
+        EmitViewportChanged("native-scroll");
+    }
+
+    private void EmitViewportChanged(string reason)
+    {
+        var scrollView = _nativeScrollView ?? FindScrollView(PlatformView);
+        if (scrollView == null)
+        {
+            return;
+        }
+
+        var zoom = (float)Math.Max(0.1, PlatformView.ScaleFactor);
+        VirtualView?.RaiseViewportChanged(new ViewportChangedEventArgs(
+            scrollView.ContentOffset.X,
+            scrollView.ContentOffset.Y,
+            zoom,
+            scrollView.Bounds.Width,
+            scrollView.Bounds.Height));
+
+        var now = DateTime.UtcNow;
+        if ((now - _lastViewportLogUtc).TotalMilliseconds < 120)
+        {
+            return;
+        }
+
+        _lastViewportLogUtc = now;
+        LogGesture($"native-viewport reason={reason} x={scrollView.ContentOffset.X:0.0} y={scrollView.ContentOffset.Y:0.0} zoom={zoom:0.00}");
     }
 
     private void AttachShiftScrollZoomRecognizer(PdfKit.PdfView pdfView)
@@ -702,6 +888,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
 
         _isPageIndexLocked = true;
         PlatformView.GoToPage(page);
+        EmitViewportChanged("go-to-page");
     }
 
     private void PageChangedNotificationHandler(NSNotification notification)
@@ -726,6 +913,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         }
 
         VirtualView?.RaisePageChanged(new Abstractions.PageChangedEventArgs((int)newPageIndex, (int)document.PageCount));
+        EmitViewportChanged("page-changed");
 
         if (VirtualView?.PageChangedCommand?.CanExecute(null) == true)
         {
@@ -803,10 +991,12 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         {
             pageIndex = (int)document.GetPageIndex(currentPage);
             var pagePoint = PlatformView.ConvertPointToPage(location, currentPage);
+            LogGesture($"tap page={pageIndex + 1} x={pagePoint.X:0.0} y={pagePoint.Y:0.0}");
             VirtualView?.RaiseTapped(new PdfTappedEventArgs(pageIndex, (float)pagePoint.X, (float)pagePoint.Y));
             return;
         }
 
+        LogGesture($"tap page={pageIndex + 1} x={location.X:0.0} y={location.Y:0.0}");
         VirtualView?.RaiseTapped(new PdfTappedEventArgs(pageIndex, (float)location.X, (float)location.Y));
     }
 
@@ -834,20 +1024,18 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
             return;
         }
 
-        var hasShiftModifier = IsShiftPressed(recognizer);
+        if (!IsShiftPressed(recognizer))
+        {
+            _lastShiftScrollTranslationX = translationX;
+            _lastShiftScrollTranslationY = translationY;
+            return;
+        }
 
         var deltaX = translationX - _lastShiftScrollTranslationX;
         var deltaY = translationY - _lastShiftScrollTranslationY;
         _lastShiftScrollTranslationX = translationX;
         _lastShiftScrollTranslationY = translationY;
-        var dominantHorizontal = Math.Abs((float)deltaX) > Math.Abs((float)deltaY) * 1.2f;
-        var shouldZoom = hasShiftModifier || dominantHorizontal;
-        if (!shouldZoom)
-        {
-            return;
-        }
-
-        var delta = dominantHorizontal ? deltaX : deltaY;
+        var delta = Math.Abs((float)deltaY) >= Math.Abs((float)deltaX) ? deltaY : deltaX;
         if (Math.Abs((float)delta) < 0.01f)
         {
             return;
@@ -858,6 +1046,7 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         var max = Math.Max(min, _maxZoom);
         var nextZoom = Math.Clamp((float)PlatformView.ScaleFactor * factor, min, max);
         PlatformView.ScaleFactor = nextZoom;
+        EmitViewportChanged("shift-scroll-zoom");
     }
 
     private Task<IReadOnlyList<PdfSearchResult>> SearchAsyncInternal(string query, PdfSearchOptions? options = null)
@@ -1013,6 +1202,12 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         VirtualView?.RaiseError(new PdfErrorEventArgs(message, exception));
     }
 
+    [Conditional("DEBUG")]
+    private static void LogGesture(string message)
+    {
+        Debug.WriteLine($"[FlowNote Gesture] mac-pdf {message}");
+    }
+
     private void HandleLinkTapped(NSUrl url)
     {
         var args = new LinkTappedEventArgs(url.AbsoluteString, null);
@@ -1136,8 +1331,18 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         }
     }
 
-    private sealed class SimultaneousGestureDelegate : UIGestureRecognizerDelegate
+    private sealed class ShiftOnlyGestureDelegate : UIGestureRecognizerDelegate
     {
+        public override bool ShouldBegin(UIGestureRecognizer recognizer)
+        {
+            if (recognizer is UIPanGestureRecognizer panRecognizer)
+            {
+                return panRecognizer.ModifierFlags.HasFlag(UIKeyModifierFlags.Shift);
+            }
+
+            return false;
+        }
+
         public override bool ShouldRecognizeSimultaneously(UIGestureRecognizer gestureRecognizer, UIGestureRecognizer otherGestureRecognizer)
         {
             return true;
@@ -1154,6 +1359,11 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         }
 
         public bool IsSearchSupported => true;
+
+        public bool IsPointOnDocument(double viewX, double viewY)
+        {
+            return true;
+        }
 
         public Task<IReadOnlyList<PdfSearchResult>> SearchAsync(string query, PdfSearchOptions? options = null)
         {
@@ -1173,6 +1383,16 @@ public class PdfViewHandler : ViewHandler<PdfView, PdfKit.PdfView>
         public void GoToSearchResult(int resultIndex)
         {
             _handler.GoToSearchResultInternal(resultIndex);
+        }
+
+        public Task<Stream?> GetThumbnailAsync(int pageIndex, int width, int height)
+        {
+            return Task.FromResult<Stream?>(null);
+        }
+
+        public Task<PdfPageBounds?> GetPageBoundsAsync(int pageIndex)
+        {
+            return Task.FromResult<PdfPageBounds?>(null);
         }
     }
 }

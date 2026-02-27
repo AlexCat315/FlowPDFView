@@ -13,6 +13,7 @@ using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using UglyToad.PdfPig.Content;
+using System.IO;
 using PigPdfDocument = UglyToad.PdfPig.PdfDocument;
 
 namespace Flow.PDFView.Platforms.Windows;
@@ -1181,6 +1182,11 @@ public class PdfViewHandler : ViewHandler<PdfView, ScrollViewer>
 
         public bool IsSearchSupported => true;
 
+        public bool IsPointOnDocument(double viewX, double viewY)
+        {
+            return true;
+        }
+
         public Task<IReadOnlyList<PdfSearchResult>> SearchAsync(string query, PdfSearchOptions? options = null)
         {
             return _handler.SearchAsyncInternal(query, options);
@@ -1199,6 +1205,16 @@ public class PdfViewHandler : ViewHandler<PdfView, ScrollViewer>
         public void GoToSearchResult(int resultIndex)
         {
             _handler.GoToSearchResultInternal(resultIndex);
+        }
+
+        public Task<Stream?> GetThumbnailAsync(int pageIndex, int width, int height)
+        {
+            return Task.FromResult<Stream?>(null);
+        }
+
+        public Task<PdfPageBounds?> GetPageBoundsAsync(int pageIndex)
+        {
+            return Task.FromResult<PdfPageBounds?>(null);
         }
     }
 }

@@ -275,6 +275,13 @@ namespace Flow.PDFView
         Task<Stream?> GetThumbnailAsync(int pageIndex, int width, int height);
 
         /// <summary>
+        /// 获取指定页面在文档坐标中的边界（缩放 1.0）。
+        /// </summary>
+        /// <param name="pageIndex">页面索引</param>
+        /// <returns>页面边界信息；不支持时返回 null</returns>
+        Task<PdfPageBounds?> GetPageBoundsAsync(int pageIndex);
+
+        /// <summary>
         /// 缩略图就绪事件
         /// </summary>
         event EventHandler<PdfThumbnailReadyEventArgs>? ThumbnailReady;

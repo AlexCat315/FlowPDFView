@@ -2,6 +2,7 @@ using Android.Content;
 using Flow.PDFView.Abstractions;
 using Microsoft.Maui.Handlers;
 using Com.Blaze.Pdfviewer;
+using System.IO;
 
 namespace Flow.PDFView.Platforms.Android;
 
@@ -349,6 +350,11 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
 
         public bool IsSearchSupported => true;
 
+        public bool IsPointOnDocument(double viewX, double viewY)
+        {
+            return _wrapper.IsPointOnDocument(viewX, viewY);
+        }
+
         public Task<IReadOnlyList<PdfSearchResult>> SearchAsync(string query, PdfSearchOptions? options = null)
         {
             return _wrapper.SearchAsync(query, options);
@@ -367,6 +373,16 @@ public partial class PdfViewHandler : ViewHandler<PdfView, Com.Blaze.Pdfviewer.P
         public void GoToSearchResult(int resultIndex)
         {
             _wrapper.GoToSearchResult(resultIndex);
+        }
+
+        public Task<Stream?> GetThumbnailAsync(int pageIndex, int width, int height)
+        {
+            return _wrapper.GetThumbnailAsync(pageIndex, width, height);
+        }
+
+        public Task<PdfPageBounds?> GetPageBoundsAsync(int pageIndex)
+        {
+            return _wrapper.GetPageBoundsAsync(pageIndex);
         }
     }
 }
